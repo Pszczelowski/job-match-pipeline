@@ -1,7 +1,7 @@
 # Decisions
 
-Version: 0.94.0
-Date: 2026-11-14
+Version: 0.99.0
+Date: 2026-11-15
 Status: verified: each entry's decision, date and version against `CHANGELOG.md`, `goal.md` and the code named in it (read 14 Nov 2026). Where the specification does not record the alternatives considered, the entry says "not recorded" and gives only what the design implies. Unknown: nothing beyond what each entry states.
 
 Short architecture decision records (context, decision, alternatives, consequence, version). "Owner" is the person who decided. Dates are 2026.
@@ -109,3 +109,52 @@ Short architecture decision records (context, decision, alternatives, consequenc
 - **Alternatives.** Making the private repository public: not recorded as considered; it holds personal data.
 - **Consequence.** Numbers in the README are measured in the private repository and labelled so.
 - **Version.** 0.94.0.
+
+## 14. Bulk status: one token per action, the same rules as the single buttons
+
+- **Context.** On the Applications pages and on the phone the same status change is often made for several jobs at once.
+- **Decision.** A bulk change is a POST to `/bulk-status` with a token per action (`csrf("bulk:<action>")`), the value `confirm=yes` and at most 200 jobs; each job is checked and changed in its own transaction under the write lock, so a busy database stops at that job and the message says what was done. Without JavaScript a GET confirmation page does the same. The single routes are unchanged.
+- **Alternatives.** Not recorded. 0.97.0 added no JSON or fetch endpoint (goal.md 5.7, "Out").
+- **Consequence.** The sheet on the list pages carries the per-action token in a data attribute; it is the same token the confirmation page already shows, so it is not a new secret.
+- **Version.** 0.96.0 (route, CLI and pages); 0.97.0 (the sheet and select.js); `goal.md` 5.7 N10, Q4, Q8.
+
+## 15. Scripts only on the eight list pages
+
+- **Context.** Until 0.96.0 no page of the web app ran a script (`script-src 'none'` everywhere).
+- **Decision.** Only the eight list pages (`/`, `/jobs`, `/missing`, `/applied`, `/interviews`, `/offers`, `/rejected`, `/withdrawn`, the tuple `web.SCRIPT_PATHS`) send `script-src 'self'` and one script tag, `/static/select.js`. select.js has no inline code, no eval and no network call, and it hard-codes no status, action or label: everything it needs comes from the server-rendered attributes. The job pages, the confirmation pages, `GET /bulk-status`, the login and the static files keep `'none'`.
+- **Alternatives.** Not recorded.
+- **Consequence.** A bug in select.js is the new risk. It is checked by a static test (no unsafe API, size, `"use strict"`), by `node --check` where node is installed, and by review of each diff; without JavaScript the confirmation page still works.
+- **Version.** 0.97.0; `goal.md` 5.7 N13.
+
+## 16. No "accepted" status yet
+
+- **Superseded by 18 (0.98.0).** The text below is kept as the history of 0.96.0 and 0.97.0.
+- **Context.** An accepted offer needs a status of its own and so a database migration, which the project keeps in its own release.
+- **Decision.** Versions 0.96.0 and 0.97.0 add no status: `withdrawn` after an offer is labelled "Declined" and `employer_rejected` is labelled "Offer withdrawn by employer" on the Offers page; `db.STATUSES` is unchanged. "Accepted", interview dates and notes come in 0.98.0 with the next free migration number, in a PR of their own.
+- **Alternatives.** Not recorded.
+- **Consequence.** The Offers page uses the two labels above; the names in the database do not change.
+- **Version.** 0.96.0 and 0.97.0; `goal.md` 5.7 N1.
+
+## 17. An employer's rejection is not an archive
+
+- **Context.** A rejection by the employer is the result of an application, not a filter outcome.
+- **Decision.** "Rejected by employer" (status `rejected`, reached from applied, interview or offer) stays on the Applications pages and is not archived. Only Reject (archive, reason `user_rejected`) archives a job; it is offered on Applied only, not on Interviews, Offers, Rejected by employer or Withdrawn.
+- **Alternatives.** Not recorded.
+- **Consequence.** The statistics count the job as an application that was rejected; a job the user wants out of the lists is archived with Reject before it is applied for.
+- **Version.** 0.96.0; `goal.md` 5.3.3 and 5.7 N3.
+
+## 18. Accepted, interview rounds and notes
+
+- **Context.** An offer that is accepted needs a status of its own, and interview rounds and notes need storage. Both need a database migration (entry 16 deferred them to 0.98.0).
+- **Decision.** Migration 25 (schema 24 -> 25) adds the status `accepted`, reached only from `offer` and undone only with Undo, and the tables `interviews` and `job_notes`. Times are stored as UTC and entered and shown in the config `timezone` (Europe/Zurich). Archive keeps the rounds and notes; restore puts them back, but not the old status-history rows, which stay in the archive record. Editing a round, the "Next interview" column and interview statistics are deferred to 0.99.0.
+- **Alternatives.** A separate status for a declined offer was rejected (it stays `withdrawn`, goal.md 5.7 OD3). Editing notes was not chosen (delete only).
+- **Consequence.** Schema 25: the 0.97.0 code refuses the database, so a rollback means restoring the backup taken before the deploy (DEPLOYMENT_MANUAL, migration section). Notes and rounds are removed with an archived job by the foreign-key cascade in 0.97.0. Decided by the user on 15 Nov 2026 (v0.98.2): deleting a round or a note asks first with a confirmation dialog; required, built in 0.99.0.
+- **Version.** 0.98.0; `goal.md` 5.7 "Decisions for 0.98.0"; supersedes entry 16.
+
+## 19. Delete confirmation popup, and the interview features of 0.99.0
+
+- **Context.** Deleting an interview round or a note removed it at once. The owner asked for a confirmation first (v0.98.2, 15 Nov 2026).
+- **Decision.** Decided by the user on 15 Nov 2026: a native JavaScript `confirm()` popup, chosen over a server confirmation page. The job page's Content-Security-Policy is `script-src 'self'` (that page only; this changes the `'none'` rule of entry 15 for the job page); the other pages keep their policy. The server still requires `confirm=yes`; without JavaScript a delete shows a confirmation page. Also in 0.99.0: rounds can be edited; the "Next interview" column is on `/interviews` only; Undo out of interview keeps the round; the Interview sheet has an optional first-round date for a single job, written in the same transaction, and its default kind is "phone"; `/analytics` shows rounds and kinds, upcoming rounds, rounds per job, and the days from application to the first round and between rounds. No migration; schema stays 25.
+- **Alternatives.** A server confirmation page (kept as the fallback without JavaScript).
+- **Consequence.** The popup logic is not run by the tests (no JavaScript runtime there; `node --check` only). The confirm popup on iPhone Safari is a manual check, pending.
+- **Version.** 0.99.0; `goal.md` 5.7 "Decisions for 0.99.0".

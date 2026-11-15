@@ -67,7 +67,7 @@ def test_undo_is_offered_only_when_the_last_status_change_can_be_taken_back(site
     assert f'/jobs/{ids[0]}/undo-status' not in c.get("/").text                                                 # v0.82.0: an applied job leaves the Top 10
     bare_status(conn, ids[0], "shortlisted")                                                                  # the history no longer matches the status
     assert "undo-status" not in c.get(f"/jobs/{ids[0]}").text and "undo-status" not in c.get("/").text
-    assert "<script" not in detail.lower() and "style=" not in detail.lower() and "onclick" not in detail.lower()
+    assert "<script" not in detail.replace('<script src="/static/confirm.js" defer></script>', "").lower() and "style=" not in detail.lower() and "onclick" not in detail.lower()
 
 
 @pytest.mark.parametrize("previous", ["scored", "not_selected", "awaiting_llm"])
@@ -121,7 +121,7 @@ def test_undo_status_refuses_a_status_that_cannot_be_set_back(site, conn, dbfile
         r = undo_status(c, ids[2], confirm="yes")
         assert r.status_code == 303, status
         page = c.get(r.headers["location"])
-        assert f"Job {ids[2]} has the status '{status}'; only a shortlisted or applied job can be set back here. Nothing was changed." in seen(page)
+        assert f"Job {ids[2]} has the status '{status}'; only a job that is shortlisted, applied, interview, offer, accepted, rejected or withdrawn can be set back here. Nothing was changed." in seen(page)
         assert 'class="notice refused"' in page.text and snapshot(dbfile) == before, status
         assert "undo-status" not in c.get(f"/jobs/{ids[2]}").text, status
     page = c.get(f"/jobs/{ids[2]}/undo-status")                                                               # the page says it too and has no form
@@ -528,7 +528,7 @@ def test_double_submit_of_an_undo_changes_things_once(world, conn, dbfile):
     second = post(c, f"/jobs/{ids[1]}/undo-status", tok, next="job")
     assert first.status_code == second.status_code == 303 and status_of(dbfile, ids[1]) == "scored"
     assert history(conn, ids[1]).count(("shortlisted", "scored", "web undo")) == 1
-    assert "only a shortlisted or applied job can be set back here" in message_after(c, second)
+    assert "only a job that is shortlisted, applied, interview, offer, accepted, rejected or withdrawn can be set back here" in message_after(c, second)
     tok = c.app.state.csrf(f"undo-approval:{ids[0]}")
     first = post(c, f"/jobs/{ids[0]}/undo-approval", tok, confirm="yes", kind="both")
     second = post(c, f"/jobs/{ids[0]}/undo-approval", tok, confirm="yes", kind="both")
@@ -544,6 +544,6 @@ def test_the_new_pages_load_no_script_and_no_inline_style(world):
     act(c, ids[1], "applied")
     for url in (f"/jobs/{ids[0]}/undo-approval", f"/jobs/{ids[1]}/undo-status", f"/jobs/{ids[0]}", f"/jobs/{ids[1]}", "/"):
         r = c.get(url)
-        low = r.text.lower()
+        low = (r.text.replace('<script src="/static/select.js" defer></script>', "") if url == "/" else r.text.replace('<script src="/static/confirm.js" defer></script>', "")).lower()      # the job page loads confirm.js (v0.99.0)
         assert r.status_code == 200 and "<script" not in low and "style=" not in low and "onclick" not in low and "javascript:" not in low, url
-        assert "script-src 'none'" in r.headers["content-security-policy"] and "unsafe-inline" not in r.headers["content-security-policy"] and "unsafe-eval" not in r.headers["content-security-policy"] and "form-action 'self'" in r.headers["content-security-policy"]
+        assert ("script-src 'self'" if url == "/" or url.count("/") == 2 else "script-src 'none'") in r.headers["content-security-policy"] and "unsafe-inline" not in r.headers["content-security-policy"] and "unsafe-eval" not in r.headers["content-security-policy"] and "form-action 'self'" in r.headers["content-security-policy"]

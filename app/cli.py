@@ -20,6 +20,9 @@
   archive      list archived jobs (--reason CODE to narrow it down); restore-job ARCHIVE_ID puts one back
   reject JOB_ID [--comment TEXT] [--yes]   reject one open job like the web button (archive, reason user_rejected); without
                            --yes it only shows the job and changes nothing; no lock, no backup
+  set-status JOB_ID --to STATUS [--yes]   move one job to shortlisted, applied, interview, offer, accepted, rejected (by the employer) or withdrawn with
+                           the same rules as the web buttons; without --yes it only shows the change and writes nothing; no lock, no backup
+  interviews --job ID   list the interview rounds and notes of one open job (read-only; times in your time zone)
   missing      list the jobs without a description, best first (open the link, copy the posting)
   set-description JOB_ID   store a pasted description (--clipboard or --file) and score the job again
   import-descriptions      store every exchange/descriptions/<job id>.txt
@@ -96,7 +99,7 @@ from datetime import datetime, timezone
 from logging.handlers import RotatingFileHandler
 from pathlib import Path
 
-from . import adapters, alerts, archive_recheck, approval, backup, calibration, db, descriptions, descriptions_fetch, documents, headless, mailbox, merge, pipeline, postpone, rejection, resolver, runreport, traceability, weblogin
+from . import adapters, alerts, archive_recheck, approval, backup, calibration, db, descriptions, descriptions_fetch, documents, headless, interviews, mailbox, merge, pipeline, postpone, rejection, resolver, runreport, statusflow, traceability, weblogin
 from . import results as batch_results
 from .resolver import discovery
 from .batch import withdraw_batch
@@ -169,6 +172,12 @@ def build_parser() -> argparse.ArgumentParser:
     rej.add_argument("job_id", type=int)
     rej.add_argument("--comment", default="", help=f"optional note, up to {rejection.COMMENT_MAX} characters")
     rej.add_argument("--yes", action="store_true", help="really reject; without it the job is only shown and nothing changes")
+    ss = sub.add_parser("set-status", help="move one job to the next stage (shortlisted, applied, interview, offer, accepted, rejected by the employer, withdrawn); --yes does it")
+    ss.add_argument("job_id", type=int)
+    ss.add_argument("--to", required=True, choices=sorted(statusflow.ACTION_FOR_STATUS), help="the new status (the same rules as the web buttons)")
+    ss.add_argument("--yes", action="store_true", help="really change it; without it the change is only shown and nothing changes")
+    iv = sub.add_parser("interviews", help="list the interview rounds and notes of one open job (read-only)")
+    iv.add_argument("--job", type=int, required=True, help="the job id")
     miss = sub.add_parser("missing", help="list jobs without a description")
     miss.add_argument("--limit", type=int, default=20)
     setd = sub.add_parser("set-description", help="store a description you copied from the posting")
@@ -603,6 +612,38 @@ def _reject_command(conn: sqlite3.Connection, cfg: dict, args, log: logging.Logg
     return 0
 
 
+def _set_status_command(conn: sqlite3.Connection, args, log: logging.Logger) -> int:
+    """`set-status JOB_ID --to STATUS`: the same rules and refusal texts as the web buttons (app/statusflow.py), history note `cli`."""
+    action = statusflow.ACTION_FOR_STATUS[args.to]
+    try:
+        conn.execute("BEGIN IMMEDIATE")                       # the status is checked and changed under one write lock
+        try:
+            row = conn.execute("SELECT title, company, status FROM jobs WHERE id = ?", (args.job_id,)).fetchone()
+            if row is None:
+                print(f"ERROR: no open job {args.job_id}. Nothing was changed.", file=sys.stderr)
+                return 1
+            scored = conn.execute("SELECT 1 FROM scores WHERE job_id = ? LIMIT 1", (args.job_id,)).fetchone() is not None
+            why = statusflow.refusal(action, args.job_id, row["status"], scored)
+            if why:
+                print(f"ERROR: {why}", file=sys.stderr)
+                return 1
+            print(f"job {args.job_id} | {row['title']} ({row['company']}) | {row['status']} -> {args.to}")
+            if not args.yes:
+                print("Nothing changed; run again with --yes to change it.")
+                return 0
+            db.set_status(conn, args.job_id, args.to, note="cli")
+        finally:
+            if conn.in_transaction:
+                conn.rollback()
+    except sqlite3.Error as exc:
+        log.warning("cli: set-status on job %s failed: %s", args.job_id, exc.__class__.__name__)
+        print(f"ERROR: {rejection.DB_BUSY_TEXT}", file=sys.stderr)
+        return 1
+    log.info("cli: job %s %s -> %s", args.job_id, row["status"], args.to)
+    print(f"Job {args.job_id} is now {args.to} (was {row['status']}).")
+    return 0
+
+
 def main(argv: list[str] | None = None, *, mail_client_factory=mailbox.connect, providers_factory=Providers.live,
          smtp_factory=None, page_fetcher=None, web_runner=None) -> int:
     args = build_parser().parse_args(argv)
@@ -790,6 +831,23 @@ def main(argv: list[str] | None = None, *, mail_client_factory=mailbox.connect, 
 
         if args.command == "reject":
             return _reject_command(conn, cfg, args, log)
+
+        if args.command == "set-status":
+            return _set_status_command(conn, args, log)
+
+        if args.command == "interviews":
+            job = conn.execute("SELECT title, company, status FROM jobs WHERE id = ?", (args.job,)).fetchone()
+            if job is None:
+                print(f"ERROR: no open job with id {args.job}", file=sys.stderr)
+                return 1
+            rounds, notes = interviews.list_rounds(conn, args.job, cfg["timezone"]), interviews.list_notes(conn, args.job, cfg["timezone"])
+            print(f"job {args.job} ({job['status']}): {job['title']} ({job['company']})")
+            for r in rounds:
+                print(f"round {r['number']}: {r['date']} {r['time']} | {r['kind']}" + (f" | {r['place']}" if r["place"] else "") + (f" | {r['notes']}" if r["notes"] else ""))
+            for n in notes:
+                print(f"note {n['created_at']} (status {n['status_at']}): {n['text']}")
+            print(f"{len(rounds)} round(s), {len(notes)} note(s)")
+            return 0
 
         if args.command == "recheck-language" and args.cap_scores:
             rows = descriptions.cap_german_scores(conn, cfg, apply=args.apply and not args.dry_run)

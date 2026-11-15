@@ -105,7 +105,7 @@ def test_the_applied_page_writes_nothing_and_has_no_script(world, conn):
     path = conn.execute("PRAGMA database_list").fetchone()[2]
     before = snapshot(path)
     r = c.get("/applied")
-    assert r.status_code == 200 and "<script" not in r.text.lower() and "onclick" not in r.text.lower()
+    assert r.status_code == 200 and "<script" not in r.text.replace('<script src="/static/select.js" defer></script>', "").lower() and "onclick" not in r.text.lower()
     assert snapshot(path) == before
     assert 'href="/applied">Applied' in c.get("/").text                               # the menu link
 

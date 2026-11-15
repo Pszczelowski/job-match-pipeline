@@ -26,6 +26,11 @@ ALLOWED_CHILD_ENV = {"PATH", "HOME", "TZ", "LANG", "CLAUDE_CONFIG_DIR", "CLAUDE_
                      "DISABLE_AUTOUPDATER", "DISABLE_UPDATES", "CLAUDE_CODE_DISABLE_NONESSENTIAL_TRAFFIC"}
 
 
+# Names the macOS Python launcher adds to its own process after exec (build_child_env does not pass them; shown by a bare
+# subprocess with env={PATH}: LC_CTYPE, __CF_USER_TEXT_ENCODING, and SDKROOT-style shim variables). Never key-like names.
+PLATFORM_ENV = {"LC_CTYPE", "__CF_USER_TEXT_ENCODING", "SDKROOT", "DEVELOPER_DIR"} if sys.platform == "darwin" else set()
+
+
 def posix(path) -> str:
     return str(path).replace("\\", "/")
 
@@ -336,7 +341,7 @@ def test_api_key_never_reaches_the_cli(world):                                  
                "CLAUDE_CODE_USE_BEDROCK": "1"}
     done = world.run(worker=world.worker(environ=environ))      # run_request does not run the start check: the child env alone must hold
     assert done["status"] == "ok"                               # the fake exits 97 when any ANTHROPIC_* or GMAIL* name is present
-    names = [set(c["env"]) for c in world.calls()]
+    names = [set(c["env"]) - PLATFORM_ENV for c in world.calls()]
     assert names and all(n <= ALLOWED_CHILD_ENV for n in names)
     role_names = [set(c["env"]) for c in world.role_calls()]
     assert all({"CLAUDE_CODE_OAUTH_TOKEN", "CLAUDE_CODE_EFFORT_LEVEL", "DISABLE_AUTOUPDATER", "DISABLE_UPDATES",
@@ -1122,3 +1127,7 @@ def test_a_resume_cut_by_the_usage_limit_or_auth_is_not_a_retry(world, status):
     state = json.loads((world.work() / "state.json").read_text(encoding="utf-8"))
     assert state["stage"] == "letters" and state["attempts"] == 0
     assert "given up" not in first["message"] and "given up" not in second["message"]
+
+
+def test_platform_env_allowance_never_hides_a_key_like_name():
+    assert not [n for n in PLATFORM_ENV if re.search(r"KEY|TOKEN|ANTHROPIC|GMAIL|PASSWORD|SECRET|CLAUDE", n)]

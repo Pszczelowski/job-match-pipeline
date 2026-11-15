@@ -11,10 +11,10 @@
   {% if j.repost %}<span class="flag">repost</span>{% endif %}
   {% for n in j.notes %}<span class="flag">{{ n }}</span>{% endfor %}
 </div>
-{{ buttons(j.id, j.actions, "job", j.undo) }}
+{{ buttons(j.id, j.actions, "job", j.undo, j.more) }}
 </div>
 {% if j.description_note %}<p class="warn">{{ j.description_note|upfirst }}</p>{% endif %}
-{% if j.partial_chars %}<p class="notice note">A partial text ({{ j.partial_chars }} characters) is waiting on the <a href="/jobs/{{ j.id }}/description">paste page</a>.</p>{% endif %}
+{% if j.partial_chars %}<p class="notice note">A partial text ({{ j.partial_chars }} characters) is waiting on the {% if demo %}paste page{% else %}<a href="/jobs/{{ j.id }}/description">paste page</a>{% endif %}.</p>{% endif %}
 {% if j.language_note %}<p class="warn">{{ j.language_note|upfirst }}</p>{% endif %}
 
 <section class="group score">
@@ -22,7 +22,7 @@
 {% if j.queued and j.added %}
 <p class="warn">Description added; scored again in the next batch.</p>
 {% elif j.queued %}
-<p class="warn">Waits for a description: it would be in the top 10, so it is not ranked until the posting text is added. <a class="button" href="/jobs/{{ j.id }}/description">Add the text</a></p>
+<p class="warn">Waits for a description: it would be in the top 10, so it is not ranked until the posting text is added. {% if not demo %}<a class="button" href="/jobs/{{ j.id }}/description">Add the text</a>{% endif %}</p>
 {% elif j.score %}
 <p class="rank band-{{ j.score.band }}"><span class="score">{{ j.score.overall }}</span> &middot; <span class="band">{{ j.score.band|upper }}</span>
   &middot; confidence {{ j.score.confidence or "not stated" }} &middot; CV variant {{ j.score.cv_variant or "not stated" }}</p>
@@ -77,8 +77,8 @@
 <div class="tablewrap"><table class="small">
   <thead><tr><th>Finding</th><th>Where</th><th>Text</th><th>Reason</th><th>Block</th><th></th></tr></thead>
   <tbody>{% for f in d.rows %}<tr><td class="n">{{ f.kind }}{% if f.warning %} (warning){% endif %}</td><td class="n">{{ f.where }}</td><td class="wide">{{ f.text }}</td><td class="wide">{{ f.reason }}</td><td class="wide">{{ f.block_text }}</td>
-    <td>{% if f.comment is not none %}accepted: {{ f.comment }}{% elif f.can_accept %}
-      <form method="post" action="/jobs/{{ j.id }}/findings/accept" class="approve">
+    <td>{% if f.comment is not none %}accepted: {{ f.comment }}{% elif f.can_accept and not demo %}
+      {% if not demo %}<form method="post" action="/jobs/{{ j.id }}/findings/accept" class="approve">
         <input type="hidden" name="csrf" value="{{ csrf('accept:' ~ j.id) }}">
         <input type="hidden" name="next" value="job">
         <input type="hidden" name="doc" value="{{ d.raw_kind }}">
@@ -88,15 +88,15 @@
         <input type="text" name="comment" maxlength="300" required placeholder="Why this is a false positive" aria-label="Comment">
         <button type="submit">Accept as false positive</button>
         <button type="submit" name="then" value="approve">Accept and approve</button>
-      </form>{% endif %}</td></tr>{% endfor %}</tbody>
+      </form>{% endif %}{% endif %}</td></tr>{% endfor %}</tbody>
 </table></div>
 {% endif %}
 {% if d.status == "blocked" %}
-<form method="post" action="/jobs/{{ j.id }}/recheck" class="approve">
+{% if not demo %}<form method="post" action="/jobs/{{ j.id }}/recheck" class="approve">
   <input type="hidden" name="csrf" value="{{ csrf('recheck:' ~ j.id) }}">
   <input type="hidden" name="next" value="job">
   <button type="submit">Recheck</button>
-</form>
+</form>{% endif %}
 {% endif %}
 {% if d.revision %}<p class="meta">Ask the writer to fix: {% if d.revision.status == "pending" %}waiting since {{ d.revision.created_at }}; it is queued and sent when no pipeline step is running.
 {%- elif d.revision.status == "relayed" %}with the writer since {{ d.revision.relayed_at }}; you get a mail when it is done.
@@ -104,21 +104,21 @@
 {%- elif d.revision.status == "stale" %}the last fix was not stored: the document changed meanwhile.
 {%- else %}the last request failed ({{ d.revision.outcome }}){% if d.revision.message %}: {{ d.revision.message }}{% endif %}.{% endif %}</p>{% endif %}
 {% if d.can_revise %}
-<form method="post" action="/jobs/{{ j.id }}/revise" class="approve">
+{% if not demo %}<form method="post" action="/jobs/{{ j.id }}/revise" class="approve">
   <input type="hidden" name="csrf" value="{{ csrf('revise:' ~ j.id) }}">
   <input type="hidden" name="next" value="job">
   <input type="hidden" name="doc" value="{{ d.raw_kind }}">
   <label for="instruction-{{ d.raw_kind }}">Instruction for the writer (optional)</label>
   <textarea id="instruction-{{ d.raw_kind }}" name="instruction" rows="3" cols="60" maxlength="1000" placeholder="Empty: fix the blocking findings"></textarea>
   <button type="submit">Ask the writer to fix</button>
-</form>
-<p class="meta">One writer call and one review by the doc-reviewer run in the background; this press is your go for them. The result is checked like an import and you get a mail either way. The previous text is kept.</p>
+</form>{% endif %}
+{% if not demo %}<p class="meta">One writer call and one review by the doc-reviewer run in the background; this press is your go for them. The result is checked like an import and you get a mail either way. The previous text is kept.</p>{% endif %}
 {% endif %}
 {% if d.text %}<div class="description">{{ d.text }}</div>{% else %}<p class="empty">The text of this document could not be read.</p>{% endif %}
 {% endfor %}
 <p class="meta">The same text on the command line: <code>python -m app documents --job {{ j.id }}</code>.</p>
 {% if j.can_approve %}
-<form method="post" action="/jobs/{{ j.id }}/approve" class="approve">
+{% if not demo %}<form method="post" action="/jobs/{{ j.id }}/approve" class="approve">
   <input type="hidden" name="csrf" value="{{ csrf('approve:' ~ j.id) }}">
   <input type="hidden" name="next" value="job">
   <label for="kind">Approve</label>
@@ -128,11 +128,11 @@
     <option value="cv">the CV</option>
   </select>
   <button type="submit">Approve documents</button>
-</form>
-<p class="meta">Same as <code>python -m app approve-document --job {{ j.id }}</code>: only a draft with its PDF on disk can be approved; the PDF is copied to the approved folder and the document is frozen. Approving does not send anything to an employer.</p>
+</form>{% endif %}
+{% if not demo %}<p class="meta">Same as <code>python -m app approve-document --job {{ j.id }}</code>: only a draft with its PDF on disk can be approved; the PDF is copied to the approved folder and the document is frozen. Approving does not send anything to an employer.</p>{% endif %}
 {% endif %}
 {% if j.approved_kinds %}
-<form method="get" action="/jobs/{{ j.id }}/undo-approval" class="approve">
+{% if not demo %}<form method="get" action="/jobs/{{ j.id }}/undo-approval" class="approve">
   <input type="hidden" name="next" value="job">
   <label for="undo-kind">Take back the approval of</label>
   <select id="undo-kind" name="kind">
@@ -141,16 +141,61 @@
     {% if "cv" in j.approved_kinds %}<option value="cv">the CV</option>{% endif %}
   </select>
   <button type="submit">Take back approval&hellip;</button>
-</form>
-<p class="meta">Same as <code>python -m app approve-document --job {{ j.id }} --undo</code>. You are asked to confirm first, because the document is unfrozen and its approved copy is removed.</p>
+</form>{% endif %}
+{% if not demo %}<p class="meta">Same as <code>python -m app approve-document --job {{ j.id }} --undo</code>. You are asked to confirm first, because the document is unfrozen and its approved copy is removed.</p>{% endif %}
 {% endif %}
 {% else %}<p class="empty">No documents for this job.</p>{% endif %}
+</section>
+
+<section class="group">
+<h2>Interview rounds</h2>
+{% if j.rounds %}
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Round</th><th>Date</th><th>Time</th><th>Kind</th><th>Place</th><th>Notes</th><th></th></tr></thead>
+  <tbody>{% for r in j.rounds %}<tr><td class="n">{{ r.number }}</td><td class="n">{{ r.date }}</td><td class="n">{{ r.time }}</td><td class="n">{{ r.kind }}</td><td class="wide">{{ r.place }}</td><td class="wide">{{ r.notes }}</td>
+    <td>{% if not demo %}<a class="button" href="/jobs/{{ j.id }}/interviews/{{ r.id }}/edit">Edit</a>{% endif %}
+      {% if not demo %}<form method="post" action="/jobs/{{ j.id }}/interviews/{{ r.id }}/delete" class="approve" data-confirm="Delete interview round {{ r.number }} ({{ r.date }} {{ r.time }})? This cannot be undone.">
+      <input type="hidden" name="csrf" value="{{ csrf('interview-delete:' ~ j.id) }}">
+      <button type="submit">Delete</button>
+    </form>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p class="empty">No interview round recorded.</p>{% endif %}
+{% if not demo %}<form method="post" action="/jobs/{{ j.id }}/interviews" class="approve">
+  <input type="hidden" name="csrf" value="{{ csrf('interviews:' ~ j.id) }}">
+  <input type="date" name="day" required aria-label="Date">
+  <input type="time" name="clock" required aria-label="Time">
+  <select name="kind" aria-label="Kind">{% for k in j.round_kinds %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select>
+  <input type="text" name="place" maxlength="300" placeholder="Place or link text" aria-label="Place">
+  <input type="text" name="notes" maxlength="2000" placeholder="Notes" aria-label="Notes">
+  <button type="submit">Add round</button>
+</form>{% endif %}
+<p class="meta">Times are in your time zone; rounds are numbered by their start.</p>
+</section>
+
+<section class="group">
+<h2>Notes</h2>
+{% if j.job_notes %}
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Added</th><th>Status then</th><th>Note</th><th></th></tr></thead>
+  <tbody>{% for n in j.job_notes %}<tr><td class="n">{{ n.created_at }}</td><td class="n">{{ n.status_at }}</td><td class="wide">{{ n.text }}</td>
+    <td>{% if not demo %}<form method="post" action="/jobs/{{ j.id }}/notes/{{ n.id }}/delete" class="approve" data-confirm="Delete the note of {{ n.created_at }}? This cannot be undone.">
+      <input type="hidden" name="csrf" value="{{ csrf('note-delete:' ~ j.id) }}">
+      <button type="submit">Delete</button>
+    </form>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% else %}<p class="empty">No note yet.</p>{% endif %}
+{% if not demo %}<form method="post" action="/jobs/{{ j.id }}/notes" class="approve">
+  <input type="hidden" name="csrf" value="{{ csrf('notes:' ~ j.id) }}">
+  <input type="text" name="text" maxlength="2000" required placeholder="A note about this job" aria-label="Note">
+  <button type="submit">Add note</button>
+</form>{% endif %}
 </section>
 
 <section class="group">
 <h2>Description</h2>
 {% if j.description %}
 <div class="description">{{ j.description }}</div>
-{% else %}<p class="empty">No description stored.{% if j.can_paste %} <a href="/jobs/{{ j.id }}/description">Add the text</a>{% endif %}</p>{% endif %}
+{% else %}<p class="empty">No description stored.{% if j.can_paste and not demo %} <a href="/jobs/{{ j.id }}/description">Add the text</a>{% endif %}</p>{% endif %}
 </section>
+{% if not demo %}<script src="/static/confirm.js" defer></script>{% endif %}
 {% endblock %}

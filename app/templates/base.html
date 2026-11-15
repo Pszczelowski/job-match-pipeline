@@ -7,23 +7,27 @@
 <meta name="color-scheme" content="dark">
 <title>{% block title %}Recruitment{% endblock %}</title>
 <link rel="stylesheet" href="/static/style.css">
-</head>
+{% if not demo and request.url.path in script_paths %}<script src="/static/select.js" defer></script>
+{% endif %}</head>
 {# The current page is taken from the path of the request: one link of the sidebar carries aria-current="page". #}
 {% set path = request.url.path %}
-{% set cur = "top" if path == "/" else "applied" if path.startswith("/applied") else "missing" if path.startswith("/missing") or path.endswith("/description") else "analytics" if path.startswith("/analytics") else "health" if path.startswith("/health") else "jobs" if path.startswith("/jobs") else "" %}
+{% set cur = "top" if path == "/" else path[1:] if path[1:] in application_pages else "missing" if path.startswith("/missing") or path.endswith("/description") else "analytics" if path.startswith("/analytics") else "health" if path.startswith("/health") else "jobs" if path.startswith("/jobs") else "" %}
 <body>
-<div class="shell{% block shellclass %}{% endblock %}">
+{% if demo %}<div class="demo-banner" role="note"><a href="/index.html">Fictional data, read-only snapshot; nothing is saved</a></div>
+{% endif %}<div class="shell{% block shellclass %}{% endblock %}">
 <aside class="sidebar">
   <a class="brand" href="/">Recruitment</a>
   {% block nav %}<nav aria-label="Main">
     <p class="navhead">Jobs</p>
     <a href="/"{% if cur == "top" %} aria-current="page"{% endif %}>Top 10</a>
     <a href="/jobs"{% if cur == "jobs" %} aria-current="page"{% endif %}>All open jobs</a>
-    <a href="/applied"{% if cur == "applied" %} aria-current="page"{% endif %}>Applied</a>
     <a href="/missing"{% if cur == "missing" %} aria-current="page"{% endif %}>Missing descriptions</a>
+    <p class="navhead">Applications</p>
+    {% for page, title in application_pages.items() %}<a href="/{{ page }}"{% if cur == page %} aria-current="page"{% endif %}>{{ title }}</a>
+    {% endfor -%}
     <p class="navhead">Insights</p>
     <a href="/analytics"{% if cur == "analytics" %} aria-current="page"{% endif %}>Analytics</a>
-    <a href="/health"{% if cur == "health" %} aria-current="page"{% endif %}>Runs / Health</a>{% if login_on %}
+    <a href="/health"{% if cur == "health" %} aria-current="page"{% endif %}>Runs / Health</a>{% if login_on and not demo %}
     <form method="post" action="/logout" class="logout"><input type="hidden" name="csrf" value="{{ csrf('logout') }}"><button type="submit">Log out</button></form>{% endif %}
   </nav>{% endblock %}
 </aside>
@@ -32,7 +36,7 @@
 {% if flash %}<div class="flash" role="status">{% for level, text in flash %}<p class="notice {{ level }}">{{ text }}</p>{% endfor %}</div>{% endif %}
 {% block content %}{% endblock %}
 </main>
-<footer>{% if login_on %}Private app, login required. The buttons write to the database.{% else %}Local app, reachable from this computer only. The buttons write to the local database.{% endif %}</footer>
+<footer>{% if demo %}Demo: fictional jobs and companies, a frozen read-only snapshot of the web app. Nothing here is saved or sent.{% elif login_on %}Private app, login required. The buttons write to the database.{% else %}Local app, reachable from this computer only. The buttons write to the local database.{% endif %}</footer>
 </div>
 </div>
 </body>

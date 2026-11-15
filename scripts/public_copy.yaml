@@ -13,6 +13,7 @@ include:
   - .claude/agents/
   - docs/
   - README.md
+  - site/
   - Dockerfile
   - compose.yaml
   - "*.example*"
@@ -60,8 +61,8 @@ binary_allow:
   - "docs/assets/*.png"     # README screenshots of the demo database (fictional jobs)
 
 # Files whose text keeps its real values (the author's name shows in the README and the license).
-replace_skip_paths: [README.md, LICENSE]
-denylist_exempt_paths: [README.md, LICENSE]
+replace_skip_paths: [README.md, LICENSE, "site/*", tests/test_freeze_demo.py]   # it checks the landing page links, which keep the name
+denylist_exempt_paths: [README.md, LICENSE, "site/*", tests/test_freeze_demo.py]
 
 # The fictional persona: examples/persona/<file> is written to profile/<file> of the copy (tracked, values-free).
 persona: {source: examples/persona/, target: profile/}
@@ -122,6 +123,6 @@ phone_allow: ["41791112233"]
 # Known false positives: path, the sha256 prefix (10 hex) of the stripped line, the rule. The finding line prints the hash.
 scan_allow: []
 # Third-party files that are not scanned for patterns (they are still checked for the denylist).
-scan_skip_patterns: ["app/static/vendor/*"]
+scan_skip_patterns: ["app/static/vendor/*", "demo/static/vendor/*"]
 # A secret-shaped match that contains one of these words is a made-up value of a test, not a secret.
 placeholder_words: [made-up, abcdef, abcd efgh ijkl mnop, fake, dummy, example]

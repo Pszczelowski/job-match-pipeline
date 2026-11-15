@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% from "_actions.html" import buttons %}
+{% from "_bulk.html" import form, select_all, box, bar, sheet %}
+{% block title %}{{ application_pages[page_key] }} - Recruitment{% endblock %}
+{% block content %}
+<h1>{{ application_pages[page_key] }} ({{ total }})</h1>
+{% if not rows %}
+<p class="empty">{{ stage_empty[page_key] }}</p>
+{% else %}
+{{ form(page_key, page_no) }}
+<div class="tablewrap">
+<table class="stack">
+  <thead><tr><th class="sel">{{ select_all() }}</th><th>Id</th><th>Title</th><th>Company</th><th>Applied on</th><th>In stage since</th><th>Days</th>{% if next_column %}<th>Next interview</th>{% endif %}<th>Score</th><th>Band</th><th>PDF</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td class="sel" data-actions="{{ r.bulk }}" data-title="{{ r.title }}" data-company="{{ r.company }}">{{ box(r.id, r.title) }}</td>
+    <td class="n id" data-label="Id">{{ r.id }}</td>
+    <td class="title"><a href="/jobs/{{ r.id }}">{{ r.title }}</a>{% if r.repost %} <span class="flag">repost</span>{% endif %}</td>
+    <td data-label="Company">{{ r.company }}</td>
+    <td class="n" data-label="Applied on">{% if r.applied_at %}{{ r.applied_at[:10] }}{% else %}not recorded{% endif %}</td>
+    <td class="n" data-label="In stage since">{% if r.stage_at %}{{ r.stage_at[:10] }}{% else %}not recorded{% endif %}</td>
+    <td class="n" data-label="Days">{% if r.days is not none %}{{ r.days }}{% else %}-{% endif %}</td>
+    {% if next_column %}<td class="n" data-label="Next interview">{% if r.next_interview %}{{ r.next_interview }}{% else %}-{% endif %}</td>
+    {% endif %}<td class="n" data-label="Score">{% if r.added %}added{% elif r.queued %}waiting{% elif r.score is not none %}{{ r.score }}{% else %}-{% endif %}</td>
+    <td class="n band">{% if r.band %}<span class="chip band-{{ r.band }}">{{ r.band|upper }}</span>{% endif %}</td>
+    <td data-label="PDF">{% for d in r.pdfs %}<a href="/jobs/{{ r.id }}/documents/{{ d.kind }}/approved-pdf">{{ d.label }}</a>{% if not loop.last %} {% endif %}{% else %}-{% endfor %}</td>
+    <td data-label="Actions">{{ buttons(r.id, r.actions, page_key, r.undo, r.more) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{{ bar(page_key) }}
+{{ sheet(page_key, page_no) }}
+{% if pages > 1 %}
+<p class="pager">
+  {% if page_no > 1 %}<a href="/{{ page_key }}?page={{ page_no - 1 }}">Previous</a>{% endif %}
+  Page {{ page_no }} of {{ pages }}
+  {% if page_no < pages %}<a href="/{{ page_key }}?page={{ page_no + 1 }}">Next</a>{% endif %}
+</p>
+{% endif %}
+{% endif %}
+{% endblock %}

@@ -1,7 +1,7 @@
 <!--
-Version: 0.94.0
-Date: 2026-11-14
-Status: verified: counts measured in the private repository at v0.93.0 (362 commits, 3,404 tests collected, 39 CLI commands, 26 web routes, 73 Python files under app/); the pipeline, services and agents were read in the code, compose.yaml and .claude/agents/ on 14 Nov 2026. Screenshots: demo database of fictional jobs, 15 Nov 2026.
+Version: 0.99.0
+Date: 2026-11-15
+Status: verified: tests measured at v0.99.0 on 15 Nov 2026 (3,807 passed and 21 skipped, full suite on macOS, 3,828 in all); CLI commands, web routes and modules as measured at v0.99.0 (41 CLI commands, 33 web routes without the login routes (36 route decorators in app/web.py minus the 3 login routes), 75 Python files under app/; commits, merged pull requests and releases measured with git and gh on 15 Nov 2026 at v0.97.0); the pipeline, services and agents were read in the code, compose.yaml and .claude/agents/ on 14 Nov 2026. Screenshots: demo database of fictional jobs, 15 Nov 2026.
 -->
 
 <div align="center">
@@ -15,8 +15,8 @@ Every morning it reads the alerts, drops what doesn't fit, scores the rest, and 
 ![FastAPI](https://img.shields.io/badge/FastAPI-0.162.0-009688?logo=fastapi&logoColor=white)
 ![SQLite](https://img.shields.io/badge/SQLite-WAL-003B57?logo=sqlite&logoColor=white)
 ![Docker Compose](https://img.shields.io/badge/Docker-compose-2496ED?logo=docker&logoColor=white)
-![Tests](https://img.shields.io/badge/tests-3404-brightgreen)
-![Releases](https://img.shields.io/badge/releases-185-blue)
+![Tests](https://img.shields.io/badge/tests-3828-brightgreen)
+![Releases](https://img.shields.io/badge/releases-190-blue)
 ![Built with Claude Code](https://img.shields.io/badge/built%20with-Claude%20Code-D97757)
 ![Paid API](https://img.shields.io/badge/paid%20API-none-success)
 ![License](https://img.shields.io/badge/license-MIT-lightgrey)
@@ -36,15 +36,15 @@ Every morning it reads the alerts, drops what doesn't fit, scores the rest, and 
 | | |
 |---|---|
 | Built in | **16 days** (30 Oct to 14 Nov 2026) |
-| Commits / pull requests / releases | **362** / **195** / **185** |
-| Automated tests | **3,404** |
-| CLI commands (`python -m app ...`) | **39** |
-| Web routes | **26** |
-| Python modules in `app/` | **73** |
+| Commits / pull requests / releases | **373** / **196** / **190** |
+| Automated tests | **3,828** |
+| CLI commands (`python -m app ...`) | **41** |
+| Web routes | **33** |
+| Python modules in `app/` | **75** |
 | Job-site integrations | **8** employer career-site adapters, **4** alert-mail parsers, **8** description readers (JobCloud, Jibe, Refline, one employer-specific site, schema.org JSON-LD pages, and the public Greenhouse, Lever and Ashby boards) |
 | AI agents | **8** (5 for development, 3 at runtime) |
 
-<sub>Measured in the private repository at v0.93.0.</sub>
+<sub>Tests measured at v0.99.0 on 15 Nov 2026 (3,807 passed, 21 skipped). CLI commands, web routes and modules measured at v0.99.0 on 15 Nov 2026 (`pytest --collect-only`, `python -m app --help`, the route table of the app without the login routes, `find app -name '*.py'`). Commits, pull requests and releases are as measured at v0.93.0.</sub>
 
 ## 🖼️ Screenshots
 
@@ -57,11 +57,13 @@ Every morning it reads the alerts, drops what doesn't fit, scores the rest, and 
     <td align="center" width="50%"><img src="docs/assets/analytics.png" alt="Analytics"><br><sub>Analytics: funnel and archive charts (Chart.js)</sub></td>
     <td align="center" width="50%"><img src="docs/assets/health.png" alt="Runs and health"><br><sub>Runs and health: every pipeline run, watchdog</sub></td>
   </tr>
+  <tr>
+    <td align="center" width="50%"><img src="docs/assets/interviews.png" alt="Interviews"><br><sub>Applications: one list per stage, with the buttons that fit it</sub></td>
+    <td align="center" width="50%"><img src="docs/assets/interviews-phone.png" alt="Interviews on a phone"><br><sub>Interviews on a phone (about 390 px): the stage list fits the width</sub></td>
+  </tr>
 </table>
 
 <sub>Screenshots from a demo database of fictional jobs (`scripts/seed_demo_db.py`).</sub>
-
-<sub>Screenshots come from a demo database with fictional data.</sub>
 
 ## ⚙️ How it works
 
@@ -77,7 +79,7 @@ flowchart TD
     G --> H["doc-reviewer (Opus): review and correct CVs and letters"]
     H --> I["finish: import results, traceability check, render PDFs"]
     I --> J["Top 10 and daily report mail"]
-    J --> K["Web app: approve, apply, undo"]
+    J --> K["Web app: approve, apply, stages, bulk status, undo"]
 ```
 
 Letters are not written for every scored job. The batch carries a `tailoring` block (`app/batch.py`): documents are for fresh jobs ranked within `documents_top_n` (default 10) whose overall score is at least `min_score` (default 60) and that have a description. The scorer scores the whole batch; in `app/headless.py` the letters and review stages run only when the documents file holds a CV.
@@ -92,7 +94,8 @@ Letters are not written for every scored job. The batch carries a `tailoring` bl
 | Score and draft | Sonnet scores against the rubric and drafts CVs | `app/headless.py`, `.claude/agents/scorer-cv.md` |
 | Letters and review | Sonnet writes letters; Opus reviews and corrects every CV and letter | `.claude/agents/letter-writer.md`, `.claude/agents/doc-reviewer.md` |
 | Finish | Validates the results file, runs the traceability check, renders PDFs, sends the report | `app/results.py`, `app/traceability.py`, `app/pdf.py`, `app/report.py` |
-| Decide | Approve, shortlist, apply, reject and undo in a small web app | `app/web.py`, `app/approval.py` |
+| Decide | Approve, shortlist, apply, reject and undo in a small web app; after applying: interview, offer, accepted, rejected by employer and withdrawn, for one job or a selection (with a confirmation; swipe and multi-select on touch screens) | `app/web.py`, `app/approval.py`, `app/statusflow.py`, `app/static/select.js` |
+| Interviews and notes | Interview rounds (date and time, shown in Europe/Zurich) and notes on each job page; kept on archive, restore and merge; `python -m app interviews --job ID` lists the rounds | `app/interviews.py`, `app/db.py`, `app/merge.py`, `app/cli.py` |
 
 ## 🏗️ Architecture
 
@@ -196,7 +199,7 @@ Tests use temporary databases and no network. Network checks are separate files 
 <summary>Open the tree</summary>
 
 ```text
-app/                  application code (73 modules)
+app/                  application code (75 modules)
   adapters/           employer career-site adapters
   parsers/            job-alert mail parsers
   resolver/           description resolver: sources, robots.txt, matching

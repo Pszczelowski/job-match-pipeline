@@ -1,7 +1,7 @@
 # Architecture
 
-Version: 0.94.0
-Date: 2026-11-14
+Version: 0.98.0
+Date: 2026-11-15
 Status: verified: service names and profiles from `compose.yaml`, module groups from the files in `app/`, statuses from `app/db.py` `STATUSES`, transitions from `app/batch.py`, `app/results.py`, `app/approval.py`, `app/web.py`, `app/rejection.py`, resilience and web-security statements from the module docstrings of `app/pipeline.py`, `app/watchdog.py`, `app/backup.py`, `app/web.py`, `app/weblogin.py` (read 14 Nov 2026). Unknown: memory limits in `compose.yaml` are first guesses by the code's own comments; behaviour on hardware other than the author's NAS.
 
 The specification of record is `goal.md` (private repository). This page is the map for a reader who has not seen it.
@@ -48,10 +48,10 @@ All paths are under `app/`.
 | Batch, results, headless | `batch.py`, `results.py`, `schemas.py`, `prompt.py`, `headless.py`, `postpone.py`, `revisions.py` | Write the batch file, validate and import results, run the LLM worker, carry over unscored jobs, document revisions |
 | Documents | `documents.py`, `traceability.py` (+ `traceability_vocab.yaml`), `pdf.py` (+ `fonts/`), `approval.py`, `rejection.py` | Store documents, fact check, render PDFs, approve and undo, reject |
 | Report | `report.py`, `runreport.py`, `analytics.py`, `calibration.py` | Daily mail, per-run report, analytics numbers, scoring calibration sheets |
-| Web | `web.py`, `weblogin.py`, `websuper.py`, `templates/`, `static/` | Server-rendered pages, login, supervisor |
+| Web | `web.py`, `weblogin.py`, `websuper.py`, `statusflow.py`, `templates/`, `static/` | Server-rendered pages, the stage rules and the page table (`statusflow.py`), login, supervisor, the select.js script of the list pages |
 | Scheduler and pipeline | `pipeline.py`, `scheduler.py`, `watchdog.py` | `prepare` and `finish`, run lock, daily loop, missed-schedule watchdog |
 | Backup | `backup.py` | Verified backups, rotation, restore with a safety copy |
-| Core | `db.py`, `models.py`, `config.py`, `cli.py`, `archive_recheck.py` | Schema and migrations, configuration checks, 39 CLI commands |
+| Core | `db.py`, `models.py`, `config.py`, `cli.py`, `archive_recheck.py` | Schema and migrations, configuration checks, 40 CLI commands |
 
 ## Batch exchange: why files, not an API
 
@@ -84,12 +84,23 @@ stateDiagram-v2
     scored --> [*]: archived
     shortlisted --> [*]: archived (user reject)
     applied --> [*]: archived (user reject)
+    applied --> interview: web Interview
+    interview --> offer: web Offer
+    applied --> rejected: employer rejected
+    interview --> rejected: employer rejected
+    offer --> rejected: employer rejected
+    applied --> withdrawn: withdrawn
+    interview --> withdrawn: withdrawn
+    offer --> withdrawn: withdrawn
+    offer --> accepted: accept
+    accepted --> offer: web undo
 ```
 
 - A job that fails a hard filter is moved to `job_archive` with a stage (`filter`, `user` or `not_selected`) and a reason code (`archive_job` in `app/db.py`); `restore-job` and `recheck-*` commands can bring it back.
 - Rejecting is allowed from `new`, `awaiting_llm`, `scored`, `not_selected`, `shortlisted`, `approved`, `applied` and `location_failed` (`REJECT_FROM`, `app/rejection.py`).
-- `interview`, `offer`, `rejected`, `withdrawn` and `location_failed` are declared in `STATUSES` (and read by `app/analytics.py`), but no code path in `app/` sets them in this version. A restored archived job keeps `applied`, `interview` or `offer` and otherwise goes back to `new` (`RESTORED_STATUSES`, `app/db.py`).
-- Undo is one step, only for `shortlisted` and `applied`, and only when the last history row is the change being undone (`undo_target`, `app/web.py`). Every change is a row in `status_history`.
+- `interview`, `offer`, `accepted`, `rejected` and `withdrawn` are set by the web app and by `set-status` since v0.96.0 (one rule table, `app/statusflow.py`). `location_failed` is declared in `STATUSES` (and read by `app/analytics.py`), but no code path in `app/` sets it in this version. A restored archived job keeps `applied`, `interview`, `offer` or `accepted` and otherwise goes back to `new` (`RESTORED_STATUSES`, `app/db.py`).
+- Schema 25 (migration 25, v0.98.0): table `interviews` (interview rounds of a job, start time in UTC) and table `job_notes` (notes of a job, with the status at the time); `jobs` and `status_history` are rebuilt for the status `accepted`. Archive keeps the rounds, the notes and the status history in the archive record; restore puts back the rounds and notes but not the old history rows.
+- Undo is one step, for `shortlisted`, `applied`, `interview`, `offer`, `accepted`, `rejected` (by the employer) and `withdrawn` (`UNDO_STATUSES`), and only when the last history row is the change being undone (`undo_target`, `app/statusflow.py`). Every change is a row in `status_history`.
 
 ## Resilience
 
@@ -101,7 +112,7 @@ stateDiagram-v2
 | Scheduler health | The loop touches a heartbeat file; the container healthcheck only reads it; a failed touch is logged, not fatal | `app/scheduler.py` |
 | Backups | SQLite online backup API (safe with WAL), written under a temporary name, checked (integrity, schema version, row count of every table), then renamed; a bad copy is deleted; rotation touches only its own name pattern; restore first makes a safety copy that rotation never removes | `app/backup.py` |
 | Partial results | A results file is rejected whole or per job with a stored reason; nothing is dropped silently; import is idempotent | `app/results.py` |
-| Undo | One-step undo of approve, shortlist and applied, with refusal messages that say why | `app/approval.py`, `app/web.py` |
+| Undo | One-step undo of approve and of every web status change (shortlist to withdrawn), with refusal messages that say why | `app/approval.py`, `app/web.py` |
 | LLM worker crash | The worker resumes parked runs by stage; a retry counter stops a crash loop; a full disk does not stop it | `app/headless.py` |
 
 ## Fetching ethics
@@ -120,12 +131,12 @@ From the docstrings of `app/web.py` and `app/weblogin.py`.
 - The Host header must be on the allow-list; a POST with an Origin or Referer that is not the app's own origin gets 403 (Origin `null` too). No CORS headers.
 - Listening beyond localhost is allowed only with `RECRUITMENT_CONTAINER=1`, a Host allow-list, a user name and a password hash.
 - Login: scrypt hash (N = 2^17, r = 8, p = 1), signed stateless cookie (`HttpOnly`, `SameSite=Lax`), throttled attempts, a bounded queue so a flood of attempts cannot start unlimited hashing.
-- Content-Security-Policy allows forms to the app only; scripts only on the two chart pages; the form body must be `application/x-www-form-urlencoded` and small.
+- Content-Security-Policy allows forms to the app only; scripts only on the two chart pages (`/analytics`, `/health`) and on the eight list pages, which load `/static/select.js` only (since v0.97.0); the form body must be `application/x-www-form-urlencoded` and small.
 - The web app never migrates the database.
 
 ## Testing strategy
 
-- 3,404 tests collected at v0.93.0 (`pytest --collect-only`), one test file per area (`tests/`).
+- 3,696 tests collected at v0.97.0 (`pytest --collect-only`, 15 Nov 2026), one test file per area (`tests/`).
 - Everything external is injected (mail client factory, travel-time providers, SMTP factory, page fetcher), so unit tests run offline against saved fixtures in `tests/fixtures/`.
 - `tests/fixtures/fake_claude.py` is a fake `claude` executable: it reads a `mode.json`, writes the files a role would write and records every call, so the whole headless chain (scorer, letters, review, resume, parking) is tested without a model.
 - Tests that touch real sites are separate files (`*_network.py`) and skip unless `RECRUITMENT_NETWORK_TESTS=1`.

@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% from "_bulk.html" import round_fields %}
+{% block title %}{{ label or "Change status" }} - Recruitment{% endblock %}
+{% block content %}
+<p><a href="{{ cancel }}">&larr; Back</a></p>
+{% if problem %}
+<h1>Nothing to change</h1>
+<p class="notice refused">{{ problem }}</p>
+{% else %}
+<h1>{{ label }}: {{ n_ok }} of {{ entries|length }} job{{ "s" if entries|length != 1 }}?</h1>
+<ul class="bulk-list">
+{% for e in entries %}
+  <li>{% if e.title is not none %}<strong>{{ e.title }}</strong> <span class="where">{{ e.company }} &middot; job {{ e.id }} &middot; status {{ e.status }}</span>{% else %}<strong>Job {{ e.id }}</strong>{% endif %}<br>
+    {% if e.will %}<span class="will">{{ e.will }}</span>{% else %}<span class="notice refused">Skipped: {{ e.skipped }}</span>{% endif %}</li>
+{% endfor %}
+</ul>
+{% if n_ok == 0 %}
+<p class="notice refused">None of these jobs can take this action. Nothing was changed.</p>
+{% else %}
+{% if action == "reject" %}
+{% if applied_warning %}
+<p class="notice refused">At least one of these jobs is marked as applied. Rejecting it archives the application: it leaves the Applied page and no longer counts
+  in the Analytics response rate; restore-job brings it back as applied (the date of the application is then the restore date).</p>
+{% endif %}
+<p>The jobs leave Today's Top 10 and the list of open jobs and are moved to the archive with the reason <code>user_rejected</code>.
+  They are not deleted: the whole record is kept in the archive, and approved documents stay on disk.
+  A wrong rejection can be undone at the command line: <code>python -m app archive</code> shows the archive entry numbers,
+  <code>python -m app restore-job &lt;archive id&gt;</code> brings a job back.</p>
+{% elif action == "undo" %}
+<p>Each job is set back one step, to the status it had before. This only changes the status in this app and is written to the status history with the note <code>web undo</code>.
+  Nothing is sent to or taken back from an employer.</p>
+{% else %}
+<p>This changes the status in this app only (the status history gets the note <code>web bulk</code>). Nothing is sent to an employer.
+  Jobs that cannot take this action are skipped and named afterwards.</p>
+{% endif %}
+<form method="post" action="/bulk-status" class="confirm">
+  <input type="hidden" name="csrf" value="{{ token }}">
+  <input type="hidden" name="action" value="{{ action }}">
+  <input type="hidden" name="ids" value="{{ ids_csv }}">
+  <input type="hidden" name="next" value="{{ nxt }}">
+  <input type="hidden" name="page" value="{{ page }}">
+  {% if action == "reject" %}
+  <p><label for="comment">Comment (optional, up to {{ comment_max }} characters, kept for all these jobs)</label><br>
+    <input type="text" id="comment" name="comment" maxlength="{{ comment_max }}" size="60" autocomplete="off"></p>
+  {% endif %}
+  {% if action == "interview" and n_ok == 1 %}{{ round_fields(false) }}{% endif %}
+  <p><button type="submit" name="confirm" value="yes"{% if action == "reject" %} class="reject"{% endif %}>Yes, {{ label|lower }} {{ n_ok }} job{{ "s" if n_ok != 1 }}</button>
+    <a class="button" href="{{ cancel }}">Cancel</a></p>
+</form>
+{% endif %}
+{% endif %}
+{% endblock %}

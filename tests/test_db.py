@@ -370,6 +370,7 @@ def test_migration_21_removes_only_rows_an_earlier_job_left_on_the_same_id(tmp_p
               "VALUES (1, ?, '2026-01-02', 'T1', 'k', 'p', 'success')", (T0,))
     c.execute("INSERT INTO postponements (job_id, batch_id, fresh, reason, noted_at) VALUES (1, 'b-old', 1, 'no_result', ?)", (T0,))
     c.commit()
+    c.executescript("CREATE TABLE interviews (id INTEGER, job_id INTEGER); CREATE TABLE job_notes (id INTEGER, job_id INTEGER);")      # archive_job reads the tables of schema 25 (v0.98.0)
     aid = db.archive_job(c, 1, "user", "user_rejected")
     c.execute("UPDATE job_archive SET rejected_at = ? WHERE id = ?", (T_ARCHIVED, aid))
     db.start_run(c, "b-new")
@@ -381,6 +382,7 @@ def test_migration_21_removes_only_rows_an_earlier_job_left_on_the_same_id(tmp_p
     c.execute("INSERT INTO description_fetches (job_id, attempted_at, status) VALUES (2, ?, 'ok')", (T0,))
     c.commit()
     c_aid = db.archive_job(c, 2, "user", "user_rejected")
+    c.executescript("DROP TABLE interviews; DROP TABLE job_notes;")                                               # migration 25 creates the real ones
     c.execute("UPDATE job_archive SET rejected_at = ? WHERE id = ?", (T_ARCHIVED, c_aid))
     c.commit()
     db.migrate(c)
@@ -464,11 +466,11 @@ def test_migration_24_converts_expired_rows_keeps_the_rest_and_adds_text(tmp_pat
         c.execute("INSERT INTO description_resolutions (id, job_id, attempted_at, day, tier, source_key, platform, status, error) "
                   "VALUES (?, ?, 'x', '2026-11-01', 'T1', 's', 'jibe', ?, ?)", (i * 10, i, status, error))
     c.commit()
-    assert db.migrate(c) == 24
+    assert db.migrate(c) == len(db.MIGRATIONS)
     got = [(r["id"], r["job_id"], r["status"], r["error"], r["text"]) for r in c.execute("SELECT * FROM description_resolutions ORDER BY id")]
     assert got == [(10, 1, "expired", "expired: posting x shows the expired notice", None), (20, 2, "no_match", "no match: none", None),
                    (30, 3, "partial", "partial: posting y has 10 characters", None), (40, 4, "no_match", None, None), (50, 5, "success", None, None)]
-    assert db.schema_version(c) == 24
+    assert db.schema_version(c) == len(db.MIGRATIONS)
     idx = {r["name"]: r["sql"] for r in c.execute("SELECT name, sql FROM sqlite_master WHERE type = 'index' AND tbl_name = 'description_resolutions'")}
     assert "idx_description_resolutions_job" in idx and "(job_id, day)" in idx["idx_description_resolutions_job"]
     assert "idx_description_resolutions_posting" in idx and "(source_key, posting_id)" in idx["idx_description_resolutions_posting"]

@@ -301,7 +301,7 @@ def cap_german_scores(conn, cfg: dict, apply: bool = False) -> list[dict]:
 
 
 # a job the user already works on is never archived or sent to be scored again by a recheck
-USER_STATUSES = ("shortlisted", "approved", "applied", "interview", "offer", "rejected", "withdrawn")
+USER_STATUSES = ("shortlisted", "approved", "applied", "interview", "offer", "accepted", "rejected", "withdrawn")
 
 
 def recheck_poland(conn, cfg: dict, run_id: str | None = None, dry_run: bool = False) -> dict[str, int]:

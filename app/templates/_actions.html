@@ -1,7 +1,7 @@
 {# The Shortlist / Applied buttons (a form each: POST with the CSRF token of this action on this job), the Reject link (to its confirmation page)
-   and, when the job's last status change can be taken back, Undo: a form for Shortlisted, a link to a confirmation page for Applied. #}
-{% macro buttons(job_id, actions, nxt, undo=none) %}
-{% if actions or undo %}
+   and, when the job's last status change can be taken back, Undo: a form for Shortlisted, a link to a confirmation page for every other status. #}
+{% macro buttons(job_id, actions, nxt, undo=none, more=()) %}
+{% if not demo and (actions or undo or more) %}
 <div class="actions">
 {% for a in actions if a != "reject" %}
   <form method="post" action="/jobs/{{ job_id }}/{{ a }}">
@@ -9,6 +9,9 @@
     <input type="hidden" name="next" value="{{ nxt }}">
     <button type="submit">{{ labels[a] }}</button>
   </form>
+{% endfor %}
+{% for a, text in more %}
+  <a class="button" href="/bulk-status?action={{ a }}&amp;id={{ job_id }}&amp;next={{ nxt }}">{{ text }}&hellip;</a>
 {% endfor %}
 {% if undo and not undo.confirm %}
   <form method="post" action="/jobs/{{ job_id }}/undo-status">

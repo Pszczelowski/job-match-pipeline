@@ -88,7 +88,7 @@ def test_top10_and_detail_show_the_buttons_that_fit_the_status(site, conn):
     assert f'href="/jobs/{ids[1]}/reject?next=top"' in top and top.count("Reject&hellip;") == 3
     d = c.get(f"/jobs/{ids[0]}").text
     assert f'action="/jobs/{ids[0]}/shortlist"' in d and f'href="/jobs/{ids[0]}/reject?next=job"' in d and 'action="/jobs/' + f'{ids[0]}/applied"' not in d
-    assert "<script" not in top.lower() and "style=" not in top.lower() and "onclick" not in top.lower()
+    assert "<script" not in top.replace('<script src="/static/select.js" defer></script>', "").lower() and "style=" not in top.lower() and "onclick" not in top.lower()
     set_status(conn, ids[0], "shortlisted")
     d = c.get(f"/jobs/{ids[0]}").text
     assert "/shortlist" not in d and f'action="/jobs/{ids[0]}/applied"' in d and "Reject&hellip;" in d
@@ -223,7 +223,7 @@ def test_a_message_with_markup_in_the_job_title_is_escaped(cfg, conn, tmp_path):
     c = client(cfg, tmp_path)
     r = act(c, ids[0], "shortlist", next="top")
     body = c.get(r.headers["location"]).text
-    assert "<script" not in body.lower() and "&lt;script&gt;" in body and "<b>x" not in body
+    assert "<script" not in body.replace('<script src="/static/select.js" defer></script>', "").lower() and "&lt;script&gt;" in body and "<b>x" not in body
 
 
 def test_flash_messages_cannot_be_made_up_by_a_link(site):

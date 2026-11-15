@@ -39,3 +39,4 @@ __pycache__/
 
 # Real values for the public-copy build (scripts/public_copy.local.example.yaml); never commit
 scripts/public_copy.local.yaml
+_site/

@@ -309,3 +309,95 @@ def test_the_real_build_finds_nothing_and_leaves_the_private_files_out(tmp_path)
         assert private not in names
     assert not any(n.startswith(("data/", "exchange/", "output/", "backups/", "logs/", "reports/", "profile/samples/")) for n in names)
     assert {"LICENSE", "profile/master_cv.yaml", "profile/photo.jpg", "scripts/build_public_copy.py", "app/web.py"} <= names
+
+
+def _seeded(tmp_path, name="demo", jobs=24):
+    from app import db
+    seed_demo_db.seed(tmp_path / name / "jobs.db", jobs=jobs)
+    return db.connect(tmp_path / name / "jobs.db")
+
+
+def test_the_seed_shows_every_stage_after_the_application(tmp_path):
+    conn = _seeded(tmp_path)
+    try:
+        counts = {r["status"]: r["n"] for r in conn.execute("SELECT status, COUNT(*) AS n FROM jobs GROUP BY status")}
+        for status in ("shortlisted", "applied", "interview", "offer", "rejected", "withdrawn"):
+            assert counts.get(status, 0) >= 1, status
+        assert counts["shortlisted"] == 2 and counts["applied"] == 1                      # two shortlisted, one plain applied
+    finally:
+        conn.close()
+
+
+def test_every_history_row_of_the_seed_is_a_step_statusflow_allows(tmp_path):
+    from app import statusflow
+    conn = _seeded(tmp_path)
+    try:
+        rows = conn.execute("SELECT job_id, from_status, to_status, note FROM status_history WHERE note = 'demo' ORDER BY id").fetchall()
+        assert rows
+        by_job = {}
+        for r in rows:
+            by_job.setdefault(r["job_id"], []).append(r)
+            assert statusflow.can(statusflow.ACTION_FOR_STATUS[r["to_status"]], r["from_status"], True), tuple(r)
+        for steps in by_job.values():                                                    # each job's rows form one chain starting at a scored job
+            assert steps[0]["from_status"] in ("scored", "not_selected")
+            assert all(a["to_status"] == b["from_status"] for a, b in zip(steps, steps[1:]))
+        reached = {r["to_status"] for r in rows}
+        assert {"shortlisted", "applied", "interview", "offer", "rejected", "withdrawn"} <= reached
+    finally:
+        conn.close()
+
+
+def test_the_seed_dates_are_fixed_spread_and_not_today(tmp_path):
+    from datetime import datetime, timezone
+    conn = _seeded(tmp_path)
+    try:
+        stamps = [r[0] for r in conn.execute("SELECT changed_at FROM status_history WHERE note = 'demo' ORDER BY id")]
+        days = {s[:10] for s in stamps}
+        assert len(days) >= 4 and len(set(stamps)) > len(stamps) // 2                       # spread over several days and hours
+        assert datetime.now(timezone.utc).strftime("%Y-%m-%d") not in days
+        assert min(days) >= "2026-11-10" and max(days) <= "2026-11-14"
+        for job_id, in conn.execute("SELECT DISTINCT job_id FROM status_history WHERE note = 'demo'").fetchall():
+            seq = [r[0] for r in conn.execute("SELECT changed_at FROM status_history WHERE job_id = ? AND note = 'demo' ORDER BY id", (job_id,))]
+            assert seq == sorted(seq)                                                         # the steps of a job never go back in time
+    finally:
+        conn.close()
+
+
+def test_the_seed_history_is_the_same_on_every_run_and_feeds_the_applications_block(tmp_path):
+    from datetime import datetime, timezone
+    from app import analytics
+    dumps = []
+    for name in ("a", "b"):
+        conn = _seeded(tmp_path, name)
+        try:
+            dumps.append([tuple(r) for r in conn.execute("SELECT job_id, from_status, to_status, note, changed_at FROM status_history WHERE note = 'demo' ORDER BY id")])
+            block = analytics.applications(conn, datetime(2026, 11, 16, 12, tzinfo=timezone.utc))
+        finally:
+            conn.close()
+    assert dumps[0] == dumps[1]
+    assert block["total"] == 8 and block["outcomes"] == {"declined": 1, "offer_withdrawn": 0, "accepted": 1} and block["week"]["total"] > 0
+    assert block["timings"]["first_answer"]["n"] >= 4 and block["rates"]["interview"]
+
+
+def test_the_seed_has_one_accepted_job_with_two_rounds_and_a_note(tmp_path):
+    conn = _seeded(tmp_path)
+    try:
+        accepted = [r["id"] for r in conn.execute("SELECT id FROM jobs WHERE status = 'accepted'")]
+        assert len(accepted) == 1
+        assert conn.execute("SELECT COUNT(*) FROM interviews WHERE job_id = ?", (accepted[0],)).fetchone()[0] == 2
+        assert conn.execute("SELECT COUNT(*) FROM job_notes WHERE job_id = ?", (accepted[0],)).fetchone()[0] == 1
+        assert conn.execute("SELECT COUNT(*) FROM interviews").fetchone()[0] == 2
+    finally:
+        conn.close()
+
+
+def test_the_copy_holds_the_freeze_script_and_the_landing_page_with_the_name_unchanged():
+    rules = bpc.load_yaml(bpc.RULES)
+    files = {path: (ROOT / path).read_bytes() for path in ("scripts/freeze_demo.py", "tests/test_freeze_demo.py", "site/index.html", "site/_headers", "site/style.css")}
+    local = {"replacements": [{"find": "Morgan", "replace": "Doe"}], "denylist": ["Morgan"]}
+    out = bpc.plan(files, rules, local)
+    assert set(files) <= set(out)
+    assert out["site/index.html"] == files["site/index.html"]                      # site/ keeps the author's name like the README
+    assert out["tests/test_freeze_demo.py"] == files["tests/test_freeze_demo.py"]  # it checks those landing links
+    assert not [f for f in bpc.scan_tree({p: out[p] for p in files if p.startswith("site/")}, rules, local)]
+    assert "Morgan" not in out["scripts/freeze_demo.py"].decode("utf-8")

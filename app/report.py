@@ -182,7 +182,7 @@ def document_marker(conn, cfg: dict, job_id: int, rank: int, score: int, descrip
     return f"documents {kind}"
 
 
-ACTED = ("applied", "interview", "offer", "rejected", "withdrawn")     # the web Top 10 hides these (v0.82.0)
+ACTED = ("applied", "interview", "offer", "accepted", "rejected", "withdrawn")     # the web Top 10 hides these (v0.82.0)
 
 
 def collect(conn, cfg: dict, batch_id: str, extra: dict | None = None, hide_acted: bool = False) -> Report:

@@ -291,7 +291,7 @@ def test_document_text_is_escaped_on_the_job_page(site, conn):
     c, ids = site
     add_doc(conn, ids[1], "cover_letter", letter(f"O {XSS}"))
     add_doc(conn, ids[1], "cv", cv(f"S {XSS}"))
-    b = c.get(f"/jobs/{ids[1]}").text
+    b = c.get(f"/jobs/{ids[1]}").text.replace('<script src="/static/confirm.js" defer></script>', "")                                  # the job page loads confirm.js (v0.99.0)
     assert "<script" not in b.lower()
     assert "O &lt;script&gt;alert(&#34;x&#34;)&lt;/script&gt;" in b and "S &lt;script&gt;alert(&#34;x&#34;)&lt;/script&gt;" in b
 
@@ -386,6 +386,9 @@ def test_stored_xss_is_escaped_everywhere(cfg, conn, tmp_path):
     c = client(cfg, tmp_path)
     for url in ("/", f"/jobs/{ids[0]}", "/jobs"):
         body = c.get(url).text
+        if url in web.SCRIPT_PATHS:                                                                           # the list pages load select.js (v0.97.0)
+            body = body.replace('<script src="/static/select.js" defer></script>', "")
+        body = body.replace('<script src="/static/confirm.js" defer></script>', "")                                                           # the job page loads confirm.js (v0.99.0)
         assert "<script" not in body.lower(), url
         assert "&lt;script&gt;alert(&#34;x&#34;)&lt;/script&gt;" in body, url
     detail = c.get(f"/jobs/{ids[0]}").text
@@ -412,11 +415,12 @@ def test_security_headers_on_every_kind_of_response(site):
     for url in ("/", "/jobs", f"/jobs/{ids[0]}", "/jobs/999", "/static/style.css", "/missing"):
         h = c.get(url).headers
         assert h["content-security-policy"].startswith("default-src 'self'"), url
-        assert "script-src 'none'" in h["content-security-policy"] and "unsafe-inline" not in h["content-security-policy"] and "unsafe-eval" not in h["content-security-policy"]
+        wanted = "script-src 'self'" if url in ("/", "/jobs", "/missing", f"/jobs/{ids[0]}") else "script-src 'none'"             # the list pages load select.js (v0.97.0), the job page confirm.js (v0.99.0)
+        assert wanted in h["content-security-policy"] and "unsafe-inline" not in h["content-security-policy"] and "unsafe-eval" not in h["content-security-policy"]
         assert h["x-content-type-options"] == "nosniff" and h["referrer-policy"] == "same-origin", url
         assert "form-action 'self'" in h["content-security-policy"] and "access-control-allow-origin" not in h, url
         assert h["x-frame-options"] == "DENY" and h["cache-control"] == "no-store", url
-    assert "<script" not in c.get("/").text.lower() and "style=" not in c.get("/").text.lower()
+    assert "<script" not in c.get("/").text.replace('<script src="/static/select.js" defer></script>', "").lower() and "style=" not in c.get("/").text.lower()
 
 
 def test_no_external_resources_and_no_openapi_pages(site):
@@ -431,7 +435,8 @@ def test_the_pages_of_chunk_1_take_no_writes_and_only_the_ten_post_routes_exist(
     c, ids = site
     app = c.app
     posts = sorted(r.path for r in app.routes if "POST" in (getattr(r, "methods", None) or ()))
-    assert posts == ["/jobs/{job_id}/applied", "/jobs/{job_id}/approve", "/jobs/{job_id}/description", "/jobs/{job_id}/findings/accept",
+    assert posts == ["/bulk-status", "/jobs/{job_id}/applied", "/jobs/{job_id}/approve", "/jobs/{job_id}/description", "/jobs/{job_id}/findings/accept",
+                     "/jobs/{job_id}/interviews", "/jobs/{job_id}/interviews/{round_id}", "/jobs/{job_id}/interviews/{round_id}/delete", "/jobs/{job_id}/notes", "/jobs/{job_id}/notes/{note_id}/delete",
                      "/jobs/{job_id}/recheck", "/jobs/{job_id}/reject", "/jobs/{job_id}/revise", "/jobs/{job_id}/shortlist", "/jobs/{job_id}/undo-approval", "/jobs/{job_id}/undo-status"]
     methods = {m for r in app.routes for m in (getattr(r, "methods", None) or ())}
     assert methods <= {"GET", "HEAD", "POST"}                    # no PUT, PATCH or DELETE anywhere

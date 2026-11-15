@@ -1,16 +1,19 @@
 {% extends "base.html" %}
+{% from "_bulk.html" import form, select_all, box, bar, sheet %}
 {% block title %}All open jobs - Recruitment{% endblock %}
 {% block content %}
 <h1>All open jobs</h1>
 {% if not rows %}
 <p class="empty">There are no open jobs yet.</p>
 {% else %}
+{{ form("list", page_no) }}
 <div class="tablewrap">
 <table class="stack">
-  <thead><tr><th>Id</th><th>Title</th><th>Company</th><th>Status</th><th>Score</th><th>Band</th></tr></thead>
+  <thead><tr><th class="sel">{{ select_all() }}</th><th>Id</th><th>Title</th><th>Company</th><th>Status</th><th>Score</th><th>Band</th></tr></thead>
   <tbody>
   {% for r in rows %}
   <tr>
+    <td class="sel" data-actions="{{ r.bulk }}"{% if r.status == "applied" %} data-warn="1"{% endif %} data-title="{{ r.title }}" data-company="{{ r.company }}">{{ box(r.id, r.title) }}</td>
     <td class="n id" data-label="Id">{{ r.id }}</td>
     <td class="title"><a href="/jobs/{{ r.id }}">{{ r.title }}</a>{% if r.repost %} <span class="flag">repost</span>{% endif %}</td>
     <td data-label="Company">{{ r.company }}</td>
@@ -22,6 +25,8 @@
   </tbody>
 </table>
 </div>
+{{ bar("list") }}
+{{ sheet("list", page_no) }}
 {% if pages > 1 %}
 <p class="pager">
   {% if page_no > 1 %}<a href="/jobs?page={{ page_no - 1 }}">Previous</a>{% endif %}

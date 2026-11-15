@@ -80,8 +80,8 @@ def test_migration_15_adds_the_table_and_keeps_the_rows(tmp_path):
     c.close()
 
 
-def test_the_migration_count_is_24():                                  # was 23: migration 24 (v0.87.1)
-    assert len(db.MIGRATIONS) == 24
+def test_the_migration_count_is_25():                                  # was 24: migration 25 (v0.98.0)
+    assert len(db.MIGRATIONS) == 25
 
 
 # --- the rules: raise once a day, resolve once ----------------------------------------------------

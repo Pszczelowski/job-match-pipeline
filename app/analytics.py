@@ -18,8 +18,9 @@ import statistics
 from datetime import date, datetime, timedelta, timezone
 from pathlib import Path
 
-from . import backup, db, pipeline, postpone, report, scheduler, watchdog
+from . import backup, db, interviews, pipeline, postpone, report, scheduler, watchdog
 from .config import resolve_path
+from .statusflow import UNDO_NOTE
 
 TOP_COMPANIES = 10
 WEEKS = 12
@@ -33,13 +34,14 @@ GROUPS = (
     ("applied", ("applied",)),
     ("interview", ("interview",)),
     ("offer", ("offer",)),
+    ("accepted", ("accepted",)),
     ("rejected by employer", ("rejected",)),
     ("withdrawn", ("withdrawn",)),
 )
 GROUP_NAMES = tuple(g for g, _ in GROUPS) + ("archived",)
 BY_STATUS = {s: g for g, statuses in GROUPS for s in statuses}
-APPLIED_EVER = ("applied", "interview", "offer", "rejected", "withdrawn")      # statuses a job has after the application
-RESPONDED = ("interview", "offer", "rejected")                                   # the employer answered
+APPLIED_EVER = ("applied", "interview", "offer", "accepted", "rejected", "withdrawn")      # statuses a job has after the application
+RESPONDED = ("interview", "offer", "accepted", "rejected")                                   # the employer answered
 BANDS = ("high", "medium", "low")
 
 FIRST_SOURCE = "(SELECT job_id, source FROM job_sources WHERE id IN (SELECT MIN(id) FROM job_sources GROUP BY job_id))"
@@ -162,8 +164,8 @@ def band_vs_outcome(conn: sqlite3.Connection, cfg: dict) -> dict:
     rows = []
     for b in BANDS:
         cells = grid[b]
-        applied = sum(cells[g] for g in ("applied", "interview", "offer", "rejected by employer", "withdrawn"))
-        answered = sum(cells[g] for g in ("interview", "offer", "rejected by employer"))
+        applied = sum(cells[g] for g in ("applied", "interview", "offer", "accepted", "rejected by employer", "withdrawn"))
+        answered = sum(cells[g] for g in ("interview", "offer", "accepted", "rejected by employer"))
         rows.append({"band": b, "cells": [cells[g] for g in GROUP_NAMES], "total": sum(cells.values()),
                      "applied": applied, "answered": answered, "rate": _rate(answered, applied)})
     applied = sum(r["applied"] for r in rows)
@@ -195,6 +197,136 @@ def time_to_apply(conn: sqlite3.Connection) -> dict:
     return {"n": len(days), "median": statistics.median(days), "shortest": min(days), "longest": max(days), "from_first_seen": fallback}
 
 
+def effective_path(history: list) -> list[tuple[str, str]]:
+    """The statuses a job really went through, from its `status_history` rows in id order (each with `to_status`, `note`, `changed_at`;
+    rows or mappings). A row with the note `web undo` takes the last step back; any other row adds a step. Returns [(status, changed_at)]."""
+    path: list[tuple[str, str]] = []
+    for h in history:
+        if h["note"] == UNDO_NOTE:
+            if path:
+                path.pop()
+        else:
+            path.append((h["to_status"], h["changed_at"]))
+    return path
+
+
+def _outcome(path: list[tuple[str, str]]) -> str | None:
+    """The one definition of the outcomes that follow an offer (v0.96.0, K5; `accepted` v0.98.0): `declined` = withdrawn straight after an
+    offer, `offer_withdrawn` = rejected by the employer straight after an offer, `accepted` = accepted straight after an offer; None for every
+    other path. A job accepted and then withdrawn or rejected ends in a path whose second-last step is `accepted`, so it counts as accepted
+    only while that is its last step."""
+    if len(path) >= 2 and path[-2][0] == "offer":
+        return {"withdrawn": "declined", "rejected": "offer_withdrawn", "accepted": "accepted"}.get(path[-1][0])
+    return None
+
+
+def _gap_days(path: list[tuple[str, str]], start: str, ends: tuple[str, ...]) -> int | None:
+    """Days from the latest `start` step before the first step with a status in `ends` to that step (None when the path has no such pair)."""
+    for i, (status, at) in enumerate(path):
+        if status in ends:
+            begin = next((t for st, t in reversed(path[:i]) if st == start), None)
+            if begin is None:
+                return None
+            return max(0, (date.fromisoformat(at[:10]) - date.fromisoformat(begin[:10])).days)
+    return None
+
+
+def _timing(days: list[int]) -> dict:
+    if not days:
+        return {"n": 0, "median": None, "shortest": None, "longest": None}
+    return {"n": len(days), "median": statistics.median(days), "shortest": min(days), "longest": max(days)}
+
+
+APP_STAGES = APPLIED_EVER                                                       # the statuses from the application on
+APP_LABELS = {s: BY_STATUS[s] for s in APP_STAGES}                              # their group names ("rejected" is "rejected by employer")
+
+
+def applications(conn: sqlite3.Connection, now: datetime | None = None) -> dict:
+    """The applications block (v0.96.0): per stage the jobs now in it and the jobs that ever reached it, the interview / offer / employer
+    rejection rates, three timings and the stage steps per ISO week (last 12). Working jobs only (archived jobs have no status
+    history); undone steps are left out (`effective_path`). Read-only."""
+    now = _now(now)
+    paths: dict[int, list[tuple[str, str]]] = {}
+    rows: dict[int, list] = {}
+    for h in conn.execute("""SELECT h.job_id, h.to_status, h.note, h.changed_at FROM status_history h JOIN jobs j ON j.id = h.job_id
+                             ORDER BY h.job_id, h.id"""):
+        rows.setdefault(h["job_id"], []).append(h)
+    for jid, hist in rows.items():
+        paths[jid] = effective_path(hist)
+    current = dict(conn.execute("SELECT id, status FROM jobs WHERE status IN ({})".format(",".join("?" * len(APP_STAGES))), APP_STAGES).fetchall())
+    reached = {s: 0 for s in APP_STAGES}
+    outcomes = {"declined": 0, "offer_withdrawn": 0, "accepted": 0}
+    first_answer, to_interview, to_offer = [], [], []
+    for jid in set(paths) | set(current):
+        path = paths.get(jid, [])
+        seen = {st for st, _ in path} | ({current[jid]} if jid in current else set())
+        if not seen & set(APP_STAGES):
+            continue
+        for st in seen & set(APP_STAGES):
+            reached[st] += 1
+        if "applied" not in seen:                                  # a job that went further was applied for
+            reached["applied"] += 1
+        out = _outcome(path)
+        if out:
+            outcomes[out] += 1
+        for bucket, start, ends in ((first_answer, "applied", ("interview", "rejected")), (to_interview, "applied", ("interview",)),
+                                    (to_offer, "interview", ("offer",))):
+            gap = _gap_days(path, start, ends)
+            if gap is not None:
+                bucket.append(gap)
+    total = reached["applied"]
+    monday = now.date() - timedelta(days=now.date().weekday())
+    starts = [monday - timedelta(weeks=k) for k in range(WEEKS - 1, -1, -1)]
+    labels = [f"{s.isocalendar().year}-W{s.isocalendar().week:02d}" for s in starts]
+    per_week = {st: dict.fromkeys(labels, 0) for st in APP_STAGES}
+    for path in paths.values():
+        for st, at in path:
+            if st in per_week and at[:10] >= starts[0].isoformat():
+                try:
+                    iso = date.fromisoformat(at[:10]).isocalendar()
+                except ValueError:
+                    continue
+                label = f"{iso.year}-W{iso.week:02d}"
+                if label in per_week[st]:
+                    per_week[st][label] += 1
+    stages = [{"label": APP_LABELS[st], "status": st, "now": sum(1 for v in current.values() if v == st), "reached": reached[st]} for st in APP_STAGES]
+    return {
+        "total": total, "stages": stages, "outcomes": outcomes,
+        "rates": {"interview": _rate(reached["interview"], total), "offer": _rate(reached["offer"], reached["interview"]),
+                  "accept": _rate(reached["accepted"], reached["offer"]),
+                  "employer_rejection": _rate(reached["rejected"], total)},
+        "timings": {"first_answer": _timing(first_answer), "interview": _timing(to_interview), "offer": _timing(to_offer)},
+        "week": {"labels": labels, "series": {APP_LABELS[st]: [per_week[st][l] for l in labels] for st in APP_STAGES},
+                 "total": sum(sum(v.values()) for v in per_week.values())},
+    }
+
+
+def interviews_block(conn: sqlite3.Connection, now: datetime | None = None) -> dict:
+    """The interview rounds of working jobs (v0.99.0; archived rounds live in the archive JSON): rounds and jobs, rounds per kind, upcoming rounds
+    (`starts_at` after `now`), rounds per job, days from the first application to the first round (the first `applied` step of the effective path;
+    jobs without one are left out) and days between consecutive rounds of a job. Days are UTC dates like the other timings. Read-only."""
+    stamp = _now(now).strftime("%Y-%m-%dT%H:%M:%SZ")
+    per_job: dict[int, list[str]] = {}
+    kinds = dict.fromkeys(interviews.KINDS, 0)
+    upcoming = 0
+    for r in conn.execute("SELECT job_id, starts_at, kind FROM interviews ORDER BY job_id, starts_at"):
+        per_job.setdefault(r["job_id"], []).append(r["starts_at"])
+        kinds[r["kind"]] += 1
+        upcoming += r["starts_at"] > stamp
+    history: dict[int, list] = {}
+    for h in conn.execute("SELECT job_id, to_status, note, changed_at FROM status_history ORDER BY job_id, id"):
+        if h["job_id"] in per_job:
+            history.setdefault(h["job_id"], []).append(h)
+    to_first, between = [], []
+    for jid, starts in per_job.items():
+        applied = next((at for st, at in effective_path(history.get(jid, [])) if st == "applied"), None)
+        if applied is not None:
+            to_first.append(max(0, (date.fromisoformat(starts[0][:10]) - date.fromisoformat(applied[:10])).days))
+        between += [(date.fromisoformat(b[:10]) - date.fromisoformat(a[:10])).days for a, b in zip(starts, starts[1:])]
+    return {"rounds": sum(kinds.values()), "jobs": len(per_job), "kinds": kinds, "upcoming": upcoming,
+            "per_job": _timing([len(v) for v in per_job.values()]), "to_first": _timing(to_first), "between": _timing(between)}
+
+
 def adapter_health(conn: sqlite3.Connection, now: datetime | None = None) -> dict:
     """Per adapter and day (last 14 days, by the start of the run): runs that read fine and runs that failed (`error` set)."""
     now = _now(now)
@@ -216,7 +348,7 @@ def adapter_health(conn: sqlite3.Connection, now: datetime | None = None) -> dic
 def analytics(conn: sqlite3.Connection, cfg: dict, now: datetime | None = None) -> dict:
     return {"funnel": funnel(conn), "rejections": rejections(conn, now), "per_day": jobs_per_source_per_day(conn, now),
             "score_source": score_by_source(conn), "bands": band_vs_outcome(conn, cfg), "apply": time_to_apply(conn),
-            "adapters": adapter_health(conn, now)}
+            "applications": applications(conn, now), "interviews": interviews_block(conn, now), "adapters": adapter_health(conn, now)}
 
 
 # --- Runs / Health -------------------------------------------------------------------------------------------------
@@ -294,7 +426,7 @@ def health(conn: sqlite3.Connection, cfg: dict, now: datetime | None = None) -> 
 # token names of style.css (`--blue` ...), never hex values; `static/charts.js` reads the values from the CSS. A block with no data is
 # left out, and the template shows its canvas only when the entry exists.
 SOURCE_COLORS = ("blue", "green", "orange", "purple", "teal", "yellow", "pink", "mint", "brown", "cyan")
-GROUP_COLORS = {"open": "grey", "shortlisted / approved": "blue", "applied": "indigo", "interview": "teal", "offer": "green",
+GROUP_COLORS = {"open": "grey", "shortlisted / approved": "blue", "applied": "indigo", "interview": "teal", "offer": "green", "accepted": "purple",
                 "rejected by employer": "red", "withdrawn": "orange", "archived": "brown"}
 BAND_COLORS = {"high": "green", "medium": "orange", "low": "grey"}
 RUN_COLORS = {"ok": "green", "failed": "red"}
@@ -346,6 +478,10 @@ def chart_data(a: dict) -> dict:
         rates = [round(100 * row["answered"] / row["applied"]) if row["applied"] else 0 for row in b["rows"]]
         out["chart-response-rate"] = _chart("bar", [row["band"] for row in b["rows"]], [_one("Response rate (%)", rates, "blue")],
                                             horizontal=True, max=100)
+    w = a["applications"]["week"]
+    if w["total"]:
+        out["chart-app-week"] = _chart("bar", [label[5:] for label in w["labels"]],
+                                       [_one(group, data, GROUP_COLORS[group]) for group, data in w["series"].items()], stacked=True)
     h = a["adapters"]
     if h["rows"]:
         ok = [sum(row["days"][i][0] for row in h["rows"]) for i in range(len(h["days"]))]

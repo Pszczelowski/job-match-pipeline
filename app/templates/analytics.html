@@ -78,7 +78,7 @@
 {% endif %}
 <h3>Response rate</h3>
 {% if not b.applied %}<p class="empty">no applications yet</p>{% else %}
-<p>Response rate = (interview + offer + rejected by employer) / applied. "Applied" counts every job that has reached the application or gone further (applied, interview, offer, rejected, withdrawn). Overall: <strong>{{ b.rate }}</strong> ({{ b.answered }} of {{ b.applied }}).</p>
+<p>Response rate = (interview + offer + accepted + rejected by employer) / applied. "Applied" counts every job that has reached the application or gone further (applied, interview, offer, accepted, rejected, withdrawn). Overall: <strong>{{ b.rate }}</strong> ({{ b.answered }} of {{ b.applied }}).</p>
 {{ chart(charts, "chart-response-rate", "Response rate per band", "s") }}
 <details><summary>Show table</summary>
 <div class="tablewrap"><table class="small">
@@ -96,6 +96,45 @@
 <div class="tiles"><div class="tile"><span class="num">{{ t.median }}</span><span class="cap">median days</span></div><div class="tile"><span class="num">{{ t.shortest }}</span><span class="cap">shortest</span></div><div class="tile"><span class="num">{{ t.longest }}</span><span class="cap">longest</span></div></div>
 <p>Median <strong>{{ t.median }}</strong> days, shortest {{ t.shortest }}, longest {{ t.longest }} (from {{ t.n }} application{{ "" if t.n == 1 else "s" }}).
 {% if t.from_first_seen %}For {{ t.from_first_seen }} of them the job page gave no posting date, so the day the job was first seen is used.{% endif %}</p>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Applications</h2>
+<p class="meta">From the recorded status changes of working jobs only (archived jobs keep no history). A step taken back with Undo is not counted.</p>
+{% set ap = a.applications %}
+{% if not ap.total %}<p class="empty">no recorded applications</p>{% else %}
+<div class="tiles">{% for st in ap.stages %}<div class="tile stage"><span class="num">{{ st.now }}</span><span class="cap">now {{ st.label }} ({{ st.reached }} ever)</span></div>{% endfor %}</div>
+<p>Of {{ ap.total }} application{{ "" if ap.total == 1 else "s" }}: interview rate <strong>{{ ap.rates.interview or "-" }}</strong>, offer rate (offers per interview) <strong>{{ ap.rates.offer or "-" }}</strong>, accept rate (accepted per offer) <strong>{{ ap.rates.accept or "-" }}</strong>, rejected by the employer <strong>{{ ap.rates.employer_rejection or "-" }}</strong>.
+  After an offer: {{ ap.outcomes.accepted }} accepted, {{ ap.outcomes.declined }} declined, {{ ap.outcomes.offer_withdrawn }} withdrawn by the employer.</p>
+<h3>Time between steps</h3>
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Step</th><th>Jobs</th><th>Median days</th><th>Shortest</th><th>Longest</th></tr></thead>
+  <tbody>{% for key, name in (("first_answer", "Applied to first answer (interview or rejected)"), ("interview", "Applied to interview"), ("offer", "Interview to offer")) %}{% set tm = ap.timings[key] %}<tr><td>{{ name }}</td><td class="n">{{ tm.n }}</td><td class="n">{{ tm.median if tm.n else "-" }}</td><td class="n">{{ tm.shortest if tm.n else "-" }}</td><td class="n">{{ tm.longest if tm.n else "-" }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% if ap.week.total %}
+<h3>Steps per ISO week (last 12)</h3>
+{{ chart(charts, "chart-app-week", "Application steps per ISO week, last 12 weeks", "m") }}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="grid">
+  <thead><tr><th>Week</th>{% for g in ap.week.series %}<th class="n">{{ g }}</th>{% endfor %}</tr></thead>
+  <tbody>{% for label in ap.week.labels %}{% set i = loop.index0 %}<tr><td>{{ label }}</td>{% for g, data in ap.week.series.items() %}<td class="n">{{ data[i] }}</td>{% endfor %}</tr>{% endfor %}</tbody>
+</table></div>
+</details>
+{% endif %}
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Interviews</h2>
+<p class="meta">From the interview rounds of working jobs (rounds of archived jobs are kept in the archive only). Days are counted between UTC dates.</p>
+{% set iv = a.interviews %}
+{% if not iv.rounds %}<p class="empty">no interview rounds recorded</p>{% else %}
+<p>{{ iv.rounds }} round{{ "" if iv.rounds == 1 else "s" }} recorded on {{ iv.jobs }} job{{ "" if iv.jobs == 1 else "s" }}: {% for k, n in iv.kinds.items() %}{{ n }} {{ k }}{{ ", " if not loop.last }}{% endfor %}. Upcoming rounds: <strong>{{ iv.upcoming }}</strong>.</p>
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Measure</th><th>Jobs</th><th>Median</th><th>Shortest</th><th>Longest</th></tr></thead>
+  <tbody>{% for key, name in (("per_job", "Rounds per job"), ("to_first", "Days from applied to the first round"), ("between", "Days between two rounds of a job")) %}{% set tm = iv[key] %}<tr><td>{{ name }}</td><td class="n">{{ tm.n }}</td><td class="n">{{ tm.median if tm.n else "-" }}</td><td class="n">{{ tm.shortest if tm.n else "-" }}</td><td class="n">{{ tm.longest if tm.n else "-" }}</td></tr>{% endfor %}</tbody>
+</table></div>
 {% endif %}
 </section>
 
@@ -120,7 +159,7 @@
 <h2>Not available yet</h2>
 <ul>
   <li>The time until an employer answers: the database records only the day you changed a status, not the day the employer replied.</li>
-  <li>The response rate as a count of replies over time: it uses the current status of each job (a job at "interview" counts as answered), because no log of employer replies exists.</li>
+  <li>The response rate per band uses the current status of each job (a job at "interview" counts as answered). The Applications block above uses the recorded status changes instead; an employer's reply is recorded on the day you set the status.</li>
 </ul>
 </section>
 <script type="application/json" id="chart-data">{{ charts|tojson }}</script>

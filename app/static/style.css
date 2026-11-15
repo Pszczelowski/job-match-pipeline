@@ -296,3 +296,75 @@ details > .tablewrap { margin-top: var(--s2); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+/* application stages and the selection without JavaScript (v0.96.0) */
+th.sel, td.sel { width: 1%; padding-right: 0; }
+input.pick, input.selectall { appearance: none; -webkit-appearance: none; width: 20px; height: 20px; margin: 0; border: 1.5px solid var(--label-3); border-radius: 50%;
+        background: transparent; vertical-align: middle; cursor: pointer; }
+input.pick:checked { background: var(--accent); border-color: var(--accent); box-shadow: inset 0 0 0 3px var(--bg); }
+@media (pointer: coarse) { input.pick, input.selectall { width: 24px; height: 24px; } td.sel { min-width: var(--control); } }
+.selbar { position: sticky; bottom: var(--s3); z-index: 5; display: flex; flex-wrap: wrap; align-items: center; gap: var(--s2); margin: var(--s4) 0;
+          padding: var(--s2) var(--s3); background: var(--box); border: 1px solid var(--sep); border-radius: var(--r-lg); }
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
+  .selbar { background: rgba(37, 37, 37, .78); -webkit-backdrop-filter: blur(20px) saturate(1.4); backdrop-filter: blur(20px) saturate(1.4); }
+}
+@media (prefers-reduced-transparency: reduce) { .selbar { background: var(--box); -webkit-backdrop-filter: none; backdrop-filter: none; } }
+.selbar .selhint { color: var(--label-2); font-size: var(--callout); margin-right: var(--s2); }
+.selbar button { background: rgba(0, 145, 255, .16); color: var(--blue); }
+.selbar button.reject { background: rgba(255, 66, 69, .16); color: var(--red); }
+.card .rank input.pick { margin-right: var(--s1); }
+@media (max-width: 600px) {
+  .selbar { bottom: 0; margin: var(--s3) calc(-1 * var(--s3)) 0; border-radius: var(--r-lg) var(--r-lg) 0 0; padding: var(--s2) var(--s3) calc(var(--s2) + env(safe-area-inset-bottom, 0px)); }
+  .selbar .selhint { flex-basis: 100%; }
+  table.stack td.sel { order: 0; }
+  main { padding-bottom: var(--s6); }
+}
+/* select.js (v0.97.0): bar states, swipe layers, the confirmation sheet (a bottom sheet on a phone, a centred alert from 601 px up) */
+.selecttoggle[hidden], .sheet-comment[hidden], input.selectall[hidden] { display: none; }
+.selbar { transition: transform .2s ease-out, opacity .2s ease-out; }
+.selbar.idle { transform: translateY(150%); opacity: 0; visibility: hidden; pointer-events: none; }
+.selbar button:disabled { opacity: .35; cursor: default; filter: none; }
+.selecttoggle { background: var(--fill-1); margin: 0 0 var(--s3); }
+.selecttoggle[aria-pressed="true"] { background: var(--accent-strong); color: #fff; }
+main.swipe-on:not(.selecting) td.sel, main.swipe-on:not(.selecting) .card .rank input.pick, main.swipe-on:not(.selecting) .selbar { display: none; }
+main.swipe-on { overflow-x: clip; }
+.swipe-row { position: relative; touch-action: pan-y; }
+.swipe-row.settle { transition: transform .2s ease-out; }
+.swipe-lead, .swipe-trail { position: absolute; top: 0; bottom: 0; display: none; }
+.swipe-row.swiping .swipe-lead, .swipe-row.swiping .swipe-trail { display: flex; }
+.sheet-warn { margin: 0 0 var(--s2); color: var(--orange); font-size: var(--callout); }
+.sheet-warn[hidden] { display: none; }
+.swipe-lead { right: 100%; }
+.swipe-trail { left: 100%; }
+.swipe-lead button, .swipe-trail button { flex: 0 0 76px; min-height: 0; border-radius: 0; padding: 0 var(--s1); font-size: var(--callout); font-weight: 600; color: #fff; background: var(--blue); }
+.swipe-trail button { background: var(--orange); }
+.swipe-trail button:last-child, .swipe-lead button:last-child { flex: 1 0 76px; }
+.swipe-trail button.reject { background: var(--red); color: #fff; }
+.swipe-trail button.more { background: var(--grey); }
+dialog.sheet { border: 0; padding: var(--s4); color: var(--label); background: var(--box); max-height: 80vh; overflow: auto; }
+dialog.sheet::backdrop { background: rgba(0, 0, 0, .45); }
+.sheet form { margin: 0; }
+.sheet-title { margin: 0 0 var(--s2); font-size: var(--headline); font-weight: 700; overflow-wrap: anywhere; }
+.sheet-list { margin: 0 0 var(--s2); padding-left: var(--s4); color: var(--label-2); font-size: var(--callout); overflow-wrap: anywhere; }
+.sheet-note { margin: 0 0 var(--s3); color: var(--label-2); font-size: var(--callout); }
+.sheet-note:empty { display: none; }
+.sheet-comment { margin: 0 0 var(--s3); }
+.sheet-comment textarea { width: 100%; min-height: calc(2 * var(--control)); padding: var(--s2); }
+.sheet-buttons { display: flex; flex-direction: column; gap: var(--s2); }
+.sheet-buttons button { width: 100%; background: var(--fill-1); color: var(--label); }
+.sheet-buttons .sheet-confirm { background: rgba(0, 145, 255, .16); color: var(--blue); }
+.sheet-buttons .sheet-confirm.reject { background: var(--red); color: #1E1E1E; font-weight: 700; }
+.sheet-buttons .sheet-cancel { margin-top: var(--s2); font-weight: 700; }
+@media (max-width: 600px) {
+  dialog.sheet { width: 100%; max-width: none; margin: auto 0 0; border-radius: 14px 14px 0 0; padding-bottom: calc(var(--s4) + env(safe-area-inset-bottom, 0px)); }
+}
+@media (min-width: 601px) {
+  dialog.sheet { width: 300px; margin: auto; border-radius: var(--r-lg); text-align: center; }
+  .sheet-list { padding-left: 0; list-style: none; }
+  .sheet-buttons { flex-direction: row-reverse; }
+  .sheet-buttons .sheet-cancel { margin-top: 0; }
+}
+.sheet-list li.choice { list-style: none; margin-bottom: var(--s2); }
+.sheet-list li.choice button { width: 100%; background: var(--fill-1); color: var(--label); }
+.sheet-list li.choice button.reject { background: rgba(255, 66, 69, .16); color: var(--red); }
+.demo-banner { padding: var(--s2) var(--s5); background: var(--box); border-bottom: 1px solid var(--sep); text-align: center; font-size: var(--callout); }
+.demo-banner a { color: var(--label); }

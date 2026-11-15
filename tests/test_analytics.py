@@ -501,7 +501,7 @@ def test_chart_data_shapes(cfg, conn):
     seeded(conn)
     charts = analytics.chart_data(analytics.analytics(conn, cfg, NOW))
     open_ = charts["chart-funnel-open"]
-    assert open_["type"] == "bar" and open_["horizontal"] and open_["labels"] == list(db.STATUSES) and len(open_["datasets"][0]["data"]) == 12
+    assert open_["type"] == "bar" and open_["horizontal"] and open_["labels"] == list(db.STATUSES) and len(open_["datasets"][0]["data"]) == 13
     assert open_["datasets"][0]["color"] == "blue" and 0 in open_["datasets"][0]["data"]
     assert charts["chart-funnel-archived"]["datasets"][0]["color"] == "grey" and charts["chart-funnel-archived"]["labels"] == list(db.ARCHIVE_STAGES)
     assert charts["chart-rej-week"]["horizontal"] is False and len(charts["chart-rej-week"]["labels"]) == 12 and charts["chart-rej-week"]["datasets"][0]["color"] == "indigo"
@@ -582,9 +582,11 @@ def test_csp_script_src_per_route(cfg, conn, tmp_path):
     c = page_client(cfg, conn, tmp_path)
     for url in ("/analytics", "/health"):
         assert "script-src 'self'" in c.get(url).headers["content-security-policy"], url
-    for url in ("/", "/jobs", "/missing", "/applied", "/static/style.css", "/static/charts.js", "/nope"):
+    for url in ("/static/style.css", "/static/charts.js", "/nope"):
         csp = c.get(url).headers["content-security-policy"]
         assert "script-src 'none'" in csp and "script-src 'self'" not in csp, url
+    for url in ("/", "/jobs", "/missing", "/applied"):                                  # the list pages load select.js (v0.97.0)
+        assert "script-src 'self'" in c.get(url).headers["content-security-policy"], url
 
 
 def test_pages_with_data_show_canvases_json_and_folded_tables(cfg, conn, tmp_path, monkeypatch):
@@ -603,3 +605,180 @@ def test_time_to_apply_is_three_tiles(cfg, conn, tmp_path):
         conn.execute("INSERT INTO status_history (job_id, from_status, to_status, changed_at) VALUES (?, 'approved', 'applied', '2026-11-01T08:00:00Z')", (jid,))
     body = page_client(cfg, conn, tmp_path).get("/analytics").text
     assert body.count('class="tile"') == 3 and "median days" in body and "Median" in body
+
+
+# --- The applications block (v0.96.0) -----------------------------------------------------------------------------
+
+def hist(conn, job_id, *steps):
+    """Write status_history rows: (to_status, 'YYYY-MM-DD'[, note]); the job's status becomes the last one that is not an undo."""
+    with conn:
+        for step in steps:
+            to, day, *note = step
+            conn.execute("INSERT INTO status_history (job_id, from_status, to_status, note, changed_at) VALUES (?, NULL, ?, ?, ?)",
+                         (job_id, to, note[0] if note else "web", f"{day}T08:00:00Z"))
+        conn.execute("UPDATE jobs SET status = ? WHERE id = ?", (steps[-1][0], job_id))
+
+
+def path_of(*steps):
+    return analytics.effective_path([{"to_status": s[0], "changed_at": f"{s[1]}T08:00:00Z", "note": s[2] if len(s) > 2 else "web"} for s in steps])
+
+
+def test_the_effective_path_drops_undone_steps():
+    assert [s for s, _ in path_of(("applied", "2026-10-01"), ("interview", "2026-10-05"), ("applied", "2026-10-06", "web undo"))] == ["applied"]
+    assert [s for s, _ in path_of(("applied", "2026-10-01"), ("interview", "2026-10-05"), ("applied", "2026-10-06", "web undo"),
+                                   ("interview", "2026-10-09"))] == ["applied", "interview"]
+    assert [s for s, _ in path_of(("applied", "2026-10-01"), ("applied", "2026-10-03"))] == ["applied", "applied"]            # repeated steps stay
+    assert [s for s, _ in path_of(("applied", "2026-10-01"), ("rejected", "2026-10-04"))] == ["applied", "rejected"]          # straight to rejected
+    assert path_of(("scored", "2026-10-01", "web undo")) == []                                                                # an undo of nothing
+    assert path_of() == []
+
+
+def test_the_outcome_after_an_offer_has_one_definition():
+    assert analytics._outcome(path_of(("interview", "2026-10-01"), ("offer", "2026-10-05"), ("withdrawn", "2026-10-07"))) == "declined"
+    assert analytics._outcome(path_of(("interview", "2026-10-01"), ("offer", "2026-10-05"), ("rejected", "2026-10-07"))) == "offer_withdrawn"
+    assert analytics._outcome(path_of(("applied", "2026-10-01"), ("withdrawn", "2026-10-07"))) is None
+    assert analytics._outcome(path_of(("offer", "2026-10-01"))) is None
+    assert analytics._outcome(path_of(("offer", "2026-10-01"), ("withdrawn", "2026-10-02"), ("offer", "2026-10-03", "web undo"))) is None
+
+
+@pytest.fixture
+def stages(conn):
+    """Five jobs: A applied -> interview -> offer -> withdrawn; B applied -> rejected; C applied -> interview (undone) -> applied then
+    interview -> rejected; D applied only; E applied -> interview -> offer -> rejected. Plus an open job."""
+    ids = {k: add_job(conn, i, status="scored") for i, k in enumerate("ABCDEF", 1)}
+    hist(conn, ids["A"], ("applied", "2026-10-01"), ("interview", "2026-10-05"), ("offer", "2026-10-12"), ("withdrawn", "2026-10-15"))
+    hist(conn, ids["B"], ("applied", "2026-10-10"), ("rejected", "2026-10-13"))
+    hist(conn, ids["C"], ("applied", "2026-10-20"), ("interview", "2026-10-21"), ("applied", "2026-10-22", "web undo"),
+         ("interview", "2026-10-26"), ("rejected", "2026-10-30"))
+    hist(conn, ids["D"], ("applied", "2026-10-28"))
+    hist(conn, ids["E"], ("applied", "2026-09-01"), ("interview", "2026-09-04"), ("offer", "2026-09-10"), ("rejected", "2026-09-12"))
+    return ids
+
+
+def test_applications_counts_rates_and_timings_on_a_fixture(conn, stages):
+    a = analytics.applications(conn, NOW)
+    now = {s["status"]: s["now"] for s in a["stages"]}
+    reached = {s["status"]: s["reached"] for s in a["stages"]}
+    assert now == {"applied": 1, "interview": 0, "offer": 0, "accepted": 0, "rejected": 3, "withdrawn": 1}
+    assert reached == {"applied": 5, "interview": 3, "offer": 2, "accepted": 0, "rejected": 3, "withdrawn": 1}
+    assert a["total"] == 5 and a["outcomes"] == {"declined": 1, "offer_withdrawn": 1, "accepted": 0}
+    assert a["rates"] == {"interview": "60%", "offer": "67%", "accept": "0%", "employer_rejection": "60%"}
+    assert [s["label"] for s in a["stages"]] == ["applied", "interview", "offer", "accepted", "rejected by employer", "withdrawn"]
+    # applied -> first answer: A 4, B 3, C 6 (the undone interview of 21 Oct is not counted), E 3; D has none
+    assert a["timings"]["first_answer"] == {"n": 4, "median": 3.5, "shortest": 3, "longest": 6}
+    assert a["timings"]["interview"] == {"n": 3, "median": 4, "shortest": 3, "longest": 6}          # A 4, C 6, E 3
+    assert a["timings"]["offer"] == {"n": 2, "median": 6.5, "shortest": 6, "longest": 7}             # A 7, E 6 (the interview of C never got an offer)
+
+
+def test_applications_with_no_data_and_a_job_that_never_applied(conn):
+    add_job(conn, 1, status="shortlisted")
+    hist(conn, 1, ("shortlisted", "2026-10-01"))
+    a = analytics.applications(conn, NOW)
+    assert a["total"] == 0 and a["rates"] == {"interview": None, "offer": None, "accept": None, "employer_rejection": None}
+    assert all(t["n"] == 0 and t["median"] is None for t in a["timings"].values()) and a["week"]["total"] == 0
+    assert analytics.applications(conn, NOW)["stages"][0] == {"label": "applied", "status": "applied", "now": 0, "reached": 0}
+
+
+def test_a_job_in_a_stage_without_history_still_counts_as_applied(conn):
+    jid = add_job(conn, 1, status="interview")
+    a = analytics.applications(conn, NOW)
+    assert a["total"] == 1 and [s["reached"] for s in a["stages"]] == [1, 1, 0, 0, 0, 0] and a["timings"]["first_answer"]["n"] == 0
+
+
+def test_the_weekly_series_has_twelve_weeks_with_empty_weeks(conn, stages):
+    w = analytics.applications(conn, NOW)["week"]
+    assert len(w["labels"]) == 12 and w["labels"][-1] == "2026-W45" and w["labels"][0] == "2026-W34"
+    assert set(w["series"]) == {"applied", "interview", "offer", "accepted", "rejected by employer", "withdrawn"}
+    assert all(len(v) == 12 for v in w["series"].values())
+    by_week = dict(zip(w["labels"], zip(*w["series"].values())))
+    assert by_week["2026-W45"] == (0, 0, 0, 0, 0, 0) and by_week["2026-W44"] == (1, 1, 0, 0, 1, 0)           # D applied 28 Oct, C interview 26 Oct, C rejected 30 Oct
+    assert by_week["2026-W38"] == (0, 0, 0, 0, 0, 0) and by_week["2026-W37"] == (0, 0, 1, 0, 1, 0) and by_week["2026-W36"] == (1, 1, 0, 0, 0, 0)
+    assert w["total"] == sum(sum(v) for v in w["series"].values()) == 14                                  # A 4, B 2, C 3 (the undone step is gone), D 1, E 4
+
+
+def test_the_weekly_chart_exists_only_with_data(cfg, conn, stages):
+    chart = analytics.chart_data(analytics.analytics(conn, cfg, NOW))["chart-app-week"]
+    assert chart["stacked"] and [d["label"] for d in chart["datasets"]] == ["applied", "interview", "offer", "accepted", "rejected by employer", "withdrawn"]
+    assert [d["color"] for d in chart["datasets"]] == ["indigo", "teal", "green", "purple", "red", "orange"] and len(chart["labels"]) == 12
+    with conn:
+        conn.execute("DELETE FROM status_history")
+    assert "chart-app-week" not in analytics.chart_data(analytics.analytics(conn, cfg, NOW))
+
+
+def test_the_applications_block_renders_with_and_without_data(cfg, conn, tmp_path):
+    empty = page_client(cfg, conn, tmp_path).get("/analytics")
+    assert empty.status_code == 200 and "<h2>Applications</h2>" in empty.text and "no recorded applications" in empty.text and "working jobs only" in empty.text
+    assert "no log of employer replies exists" not in empty.text and 'id="chart-app-week"' not in empty.text
+    ids = {k: add_job(conn, i) for i, k in enumerate("AB", 1)}
+    hist(conn, ids["A"], ("applied", "2026-10-28"), ("interview", "2026-10-30"))
+    hist(conn, ids["B"], ("applied", "2026-10-29"), ("rejected", "2026-10-31"))
+    body = page_client(cfg, conn, tmp_path).get("/analytics").text
+    section = body.split("<h2>Applications</h2>")[1].split("<h2>Adapter health")[0]
+    assert "Of 2 applications" in section and "Applied to first answer" in section and "no recorded applications" not in section
+
+
+def test_accepted_counts_as_applied_answered_and_an_accept_rate(cfg, conn):
+    a, b = add_job(conn, 1, status="scored", score=80), add_job(conn, 2, status="scored", score=80)
+    hist(conn, a, ("applied", "2026-10-01"), ("interview", "2026-10-05"), ("offer", "2026-10-12"), ("accepted", "2026-10-14"))
+    hist(conn, b, ("applied", "2026-10-02"), ("interview", "2026-10-06"), ("offer", "2026-10-13"))
+    block = analytics.applications(conn, NOW)
+    assert {s["status"]: (s["now"], s["reached"]) for s in block["stages"]}["accepted"] == (1, 1)
+    assert block["outcomes"]["accepted"] == 1 and block["rates"]["accept"] == "50%"
+    grid = analytics.band_vs_outcome(conn, cfg)
+    assert grid["applied"] == 2 and grid["answered"] == 2 and "accepted" in grid["groups"]
+
+
+# --- The interviews block (v0.99.0) -------------------------------------------------------------------------------
+
+def rnd(conn, jid, starts, kind="video"):
+    with conn:
+        conn.execute("INSERT INTO interviews (job_id, starts_at, kind, created_at) VALUES (?, ?, ?, '2026-10-01T00:00:00Z')", (jid, starts, kind))
+
+
+def test_interview_stats_count_rounds_kinds_and_upcoming(conn):
+    a, b = add_job(conn, 1, "interview"), add_job(conn, 2, "interview")
+    rnd(conn, a, "2026-10-20T08:00:00Z", "phone")
+    rnd(conn, a, "2026-11-10T08:00:00Z", "onsite")
+    rnd(conn, b, "2026-11-02T12:00:00Z", "video")                  # exactly now: not upcoming
+    rnd(conn, b, "2026-11-20T08:00:00Z", "video")
+    x = analytics.interviews_block(conn, NOW)
+    assert (x["rounds"], x["jobs"], x["upcoming"]) == (4, 2, 2)
+    assert x["kinds"] == {"phone": 1, "video": 2, "onsite": 1, "other": 0}
+    assert x["per_job"] == {"n": 2, "median": 2, "shortest": 2, "longest": 2}
+
+
+def test_applied_to_first_round_uses_the_effective_path(conn):
+    a, b, c = add_job(conn, 1, "interview"), add_job(conn, 2, "interview"), add_job(conn, 3, "interview")
+    hist(conn, a, ("shortlisted", "2026-09-30"), ("applied", "2026-10-01"), ("shortlisted", "2026-10-02", "web undo"), ("applied", "2026-10-05"))
+    rnd(conn, a, "2026-10-09T08:00:00Z")                           # 4 days: the undone application of 10-01 is ignored
+    hist(conn, b, ("applied", "2026-10-01"))
+    rnd(conn, b, "2026-10-11T08:00:00Z")                           # 10 days
+    rnd(conn, c, "2026-10-11T08:00:00Z")                           # no applied step: left out
+    x = analytics.interviews_block(conn, NOW)
+    assert x["to_first"] == {"n": 2, "median": 7, "shortest": 4, "longest": 10}
+
+
+def test_between_rounds_and_rounds_per_job(conn):
+    a, b = add_job(conn, 1, "interview"), add_job(conn, 2, "interview")
+    for day in ("2026-10-01", "2026-10-04", "2026-10-14"):         # gaps 3 and 10
+        rnd(conn, a, f"{day}T08:00:00Z")
+    rnd(conn, b, "2026-10-01T08:00:00Z")
+    x = analytics.interviews_block(conn, NOW)
+    assert x["between"] == {"n": 2, "median": 6.5, "shortest": 3, "longest": 10}
+    assert x["per_job"] == {"n": 2, "median": 2.0, "shortest": 1, "longest": 3}
+
+
+def test_no_rounds_shows_none_recorded(cfg, conn, tmp_path):
+    x = analytics.interviews_block(conn, NOW)
+    assert x["rounds"] == 0 and x["per_job"]["n"] == 0 and x["to_first"]["n"] == 0 and x["between"]["n"] == 0
+    assert "no interview rounds recorded" in page_client(cfg, conn, tmp_path).get("/analytics").text
+
+
+def test_the_analytics_page_shows_the_interviews_block(cfg, conn, tmp_path):
+    a = add_job(conn, 1, "interview")
+    hist(conn, a, ("applied", "2026-10-01"))
+    rnd(conn, a, "2026-10-09T08:00:00Z", "phone")
+    rnd(conn, a, "2099-01-01T08:00:00Z", "onsite")
+    body = page_client(cfg, conn, tmp_path).get("/analytics").text
+    assert "<h2>Interviews</h2>" in body and "2 rounds recorded on 1 job" in body and "1 phone, 0 video, 1 onsite, 0 other" in body
+    assert "Upcoming rounds: <strong>1</strong>" in body and "Days from applied to the first round" in body and "no interview rounds recorded" not in body

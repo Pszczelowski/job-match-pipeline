@@ -15,7 +15,7 @@ from .dedup import core_cities, normalize_company_key
 from .descriptions import USER_STATUSES, DescriptionError, apply_description
 
 STATUS_RANK = {"new": 0, "location_failed": 0, "awaiting_llm": 1, "scored": 2, "not_selected": 2, "shortlisted": 3,
-               "approved": 4, "applied": 5, "interview": 6, "offer": 7, "rejected": 7, "withdrawn": 7}
+               "approved": 4, "applied": 5, "interview": 6, "offer": 7, "accepted": 8, "rejected": 7, "withdrawn": 7}
 
 
 def rekey(key: str) -> str:
@@ -179,7 +179,8 @@ def summary(p: Plan) -> str:
 def _loser_record(conn, job_id: int) -> dict:
     record = {"job": dict(conn.execute("SELECT * FROM jobs WHERE id = ?", (job_id,)).fetchone())}
     for name, table in (("sources", "job_sources"), ("filter_results", "job_filter_results"), ("documents", "documents"),
-                        ("scores", "scores"), ("status_history", "status_history"), ("description_log", "description_log")):
+                        ("scores", "scores"), ("status_history", "status_history"), ("description_log", "description_log"),
+                        ("interviews", "interviews"), ("notes", "job_notes")):
         record[name] = [dict(r) for r in conn.execute(f"SELECT * FROM {table} WHERE job_id = ? ORDER BY id", (job_id,))]
     locations = []
     for loc in conn.execute("SELECT * FROM job_locations WHERE job_id = ? ORDER BY id", (job_id,)):
@@ -205,6 +206,8 @@ def _merge_group(conn, g: Group, backup_file: str | None) -> dict | None:
         for loser_id in g.losers:
             record = _loser_record(conn, loser_id)             # the whole loser as it was, before anything moves
             moved = {"sources": conn.execute("UPDATE job_sources SET job_id = ? WHERE job_id = ?", (g.survivor, loser_id)).rowcount,
+                     "interviews": conn.execute("UPDATE interviews SET job_id = ? WHERE job_id = ?", (g.survivor, loser_id)).rowcount,
+                     "notes": conn.execute("UPDATE job_notes SET job_id = ? WHERE job_id = ?", (g.survivor, loser_id)).rowcount,
                      "documents": []}
             if g.core_city:
                 moved["match"] = "core_city"

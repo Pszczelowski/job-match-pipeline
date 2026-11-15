@@ -46,6 +46,7 @@ import hmac
 import json
 import logging
 import os
+import re
 import secrets
 import sqlite3
 from datetime import datetime, timezone
@@ -60,7 +61,7 @@ from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from starlette.exceptions import HTTPException as StarletteHTTPException
 
-from . import analytics, approval, db, descriptions, documents, pipeline, rejection, report, weblogin
+from . import analytics, approval, db, descriptions, documents, interviews, pipeline, rejection, report, statusflow, weblogin
 from .config import ConfigError, resolve_path
 from .documents import KINDS, approved_dir, document_text, documents_dir, finding_key, overridable, SHOWN_AS_WARNING
 from .filters.language import posting_is_german
@@ -86,9 +87,12 @@ HEADERS = {
 # The two chart pages (v0.89.0) load the vendored Chart.js and static/charts.js from this app: script-src 'self', never unsafe-inline or unsafe-eval.
 CHART_PATHS = ("/analytics", "/health")
 CHART_CSP = HEADERS["Content-Security-Policy"].replace("script-src 'none'", "script-src 'self'")
+# The job page (v0.99.0) loads static/confirm.js (the native confirm() of a delete): script-src 'self' on exactly `/jobs/<digits>`, the rest of the policy unchanged.
+JOB_PAGE = re.compile(r"/jobs/[0-9]+")
 
 
 MAX_REVISE_BODY = 16_000                                # the revise form: 1000 characters of four bytes each, url-encoded
+MAX_INTERVIEW_BODY = 40_000                              # a round or a note: up to 2300 characters of four bytes each, url-encoded (12 bytes each in the worst case)
 MAX_BODY = 10_000                                       # bytes of a form body; the forms hold a token, a choice and a short comment
 # the paste page: MAX_CHARS (100,000) characters, percent-encoded up to 9 bytes each in the worst case, so a large posting can
 # be a few hundred kB; only that route has this limit
@@ -100,22 +104,35 @@ BOOKMARKLET = (
 )
 COMMENT_MAX = rejection.COMMENT_MAX                         # shared with `python -m app reject`
 REVISE_INSTRUCTION_MAX = 1000                               # characters of the optional instruction of "Ask the writer to fix"
-NEXT_PAGES = ("top", "job", "list", "applied")                   # where a button sends the user back to (never a free URL)
+NEXT_PAGES = ("top", "job", "list") + statusflow.APPLICATION_PAGES                   # where a button sends the user back to (never a free URL)
 
-# Which buttons a job gets, by status (executor decisions, goal.md 5.7): Shortlist from scored or not_selected (awaiting_llm only
-# when it already has a score, i.e. it waits to be scored again); Applied from shortlisted or approved; Reject from any status
-# before the application, and (decision of 10 Nov 2026) from applied; a job that was applied for and is further along is not
-# archived by a button.
-SHORTLIST_FROM = ("scored", "not_selected")
-APPLIED_FROM = ("shortlisted", "approved")
-REJECT_FROM = rejection.REJECT_FROM
-HIDDEN_FROM_OPEN = ("applied",)                            # not on /jobs: applied jobs have their own page; the /missing queue is hidden too (job_list)
-LABELS = {"shortlist": "Shortlist", "applied": "Applied"}
+# The bulk route (v0.96.0): one token per action, the jobs of a selection are changed one by one, each in its own transaction.
+BULK_ACTIONS = tuple(statusflow.FORWARD) + ("undo", "reject")
+BULK_PAGES = tuple(statusflow.PAGE_ACTIONS) + ("job",)         # `job`: the job page, exactly one job
+MAX_BULK = 200                                                  # jobs per request (= PAGE_SIZE)
+PAGE_PATHS = {"top": "/", "list": "/jobs", **{p: f"/{p}" for p in statusflow.APPLICATION_PAGES}}      # where a button sends the user back to (NEXT_PAGES)
+BULK_PATHS = {**PAGE_PATHS, "missing": "/missing"}
+# The 8 list pages (v0.97.0) load static/select.js: script-src 'self' on exactly these paths (the same tuple decides the script tag), never unsafe-inline or unsafe-eval.
+SCRIPT_PATHS = tuple(PAGE_PATHS.values()) + ("/missing",)
+BULK_PAGED = ("list",) + statusflow.APPLICATION_PAGES      # the pages that have `?page=N`
+BULK_NOTE = "web bulk"
+BULK_LISTED = 10                                                # jobs named in one flash line
 
-# Undo of a status (v0.49.0, executor decisions, goal.md 5.7): one step back for `shortlisted` and `applied` only, and only to
-# a status from which the web app itself allows reaching the current one (`allowed_actions`).
-UNDO_STATUSES = {"shortlisted": "shortlist", "applied": "applied"}      # status -> the action that leads to it
-UNDO_NOTE = "web undo"
+
+HIDDEN_FROM_OPEN = report.ACTED                            # not on /jobs: jobs from the application on have their own pages; the /missing queue is hidden too (job_list)
+
+
+# The status rules (button availability, refusal texts, undo) live in app/statusflow.py; the old names stay importable from here.
+SHORTLIST_FROM = statusflow.SHORTLIST_FROM
+APPLIED_FROM = statusflow.APPLIED_FROM
+REJECT_FROM = statusflow.REJECT_FROM
+LABELS = statusflow.LABELS
+UNDO_STATUSES = statusflow.UNDO_STATUSES
+UNDO_NOTE = statusflow.UNDO_NOTE
+allowed_actions = statusflow.allowed_actions
+refusal = statusflow.refusal
+undo_target = statusflow.undo_target
+undo_info = statusflow.undo_info
 
 
 class WebDbError(Exception):
@@ -205,73 +222,6 @@ def open_writable(path: str | Path) -> sqlite3.Connection:
     return _open(path, writable=True)
 
 
-def allowed_actions(status: str, scored: bool) -> tuple[str, ...]:
-    """The buttons a job with this status shows: any of `shortlist`, `applied`, `reject`."""
-    out = []
-    if status in SHORTLIST_FROM or (status == "awaiting_llm" and scored):
-        out.append("shortlist")
-    if status in APPLIED_FROM:
-        out.append("applied")
-    if status in REJECT_FROM:
-        out.append("reject")
-    return tuple(out)
-
-
-def refusal(action: str, job_id: int, status: str, scored: bool) -> str | None:
-    """Why the action cannot be done on a job with this status, or None when it can."""
-    if action in allowed_actions(status, scored):
-        return None
-    if action == "shortlist":
-        if status == "shortlisted":
-            return f"Job {job_id} is already shortlisted. Nothing was changed."
-        if status == "awaiting_llm":
-            return f"Job {job_id} is waiting for its first score and cannot be shortlisted yet. Nothing was changed."
-        return f"Job {job_id} has the status '{status}'; only a scored job can be shortlisted. Nothing was changed."
-    if action == "applied":
-        if status == "applied":
-            return f"Job {job_id} is already marked as applied. Nothing was changed."
-        return f"Job {job_id} has the status '{status}'; only a shortlisted or approved job can be marked as applied. Nothing was changed."
-    return rejection.refusal(job_id, status)
-
-
-def undo_target(conn: sqlite3.Connection, job_id: int, status: str, scored: bool) -> tuple[str | None, str | None]:
-    """(the status an undo would restore, None) or (None, why the status cannot be undone). One step only: the last row of
-    `status_history` must be the change to the current status (not itself an undo), must say where the job came from, and that
-    status must be one the web app allows the current status to be reached from."""
-    if status not in UNDO_STATUSES:
-        return None, (f"Job {job_id} has the status '{status}'; only a shortlisted or applied job can be set back here. "
-                      "Nothing was changed.")
-    last = conn.execute("SELECT from_status, to_status, note FROM status_history WHERE job_id = ? ORDER BY id DESC LIMIT 1",
-                        (job_id,)).fetchone()
-    if last is None or last["to_status"] != status:
-        return None, (f"Job {job_id} is '{status}', but its last recorded status change was not the change to '{status}', "
-                      "so the app does not know what to go back to. Nothing was changed.")
-    if last["note"] == UNDO_NOTE:
-        return None, f"The last change on job {job_id} was already an undo; the app goes back one step only. Nothing was changed."
-    previous = last["from_status"]
-    if not previous:
-        return None, f"Job {job_id} has no earlier status recorded, so there is nothing to go back to. Nothing was changed."
-    if UNDO_STATUSES[status] not in allowed_actions(previous, scored):
-        return None, (f"Job {job_id} was '{previous}' before, and the web app does not allow '{status}' from there, "
-                      "so it will not go back to it. Nothing was changed.")
-    if previous == "approved":                                  # 'approved' means both documents are approved (goal.md 5.6)
-        states = {r["kind"]: r["status"] for r in conn.execute("SELECT kind, status FROM documents WHERE job_id = ?", (job_id,))}
-        if not all(states.get(k) == "approved" for k in KINDS):
-            return None, (f"Job {job_id} was 'approved' before, but its documents are no longer both approved, so it cannot go "
-                          "back to that status. Approve them again first. Nothing was changed.")
-    return previous, None
-
-
-def undo_info(conn: sqlite3.Connection, job_id: int, status: str, scored: bool) -> dict | None:
-    """What the Undo button of a job shows, or None when there is nothing to undo (the button is shown only when it would work)."""
-    if status not in UNDO_STATUSES:
-        return None
-    target, _ = undo_target(conn, job_id, status, scored)
-    if target is None:
-        return None
-    return {"from": status, "to": target, "confirm": status == "applied"}       # Applied asks first, Shortlisted does not
-
-
 def latest_batch(conn: sqlite3.Connection) -> str | None:
     """The newest batch whose results were imported (its top 10 is today's), or None."""
     row = conn.execute(
@@ -312,7 +262,10 @@ def missing_rows(conn: sqlite3.Connection) -> list[dict]:
             link = report.safe_url(s["url"])
             if link and link not in links:
                 links.append(link)
+        scored = conn.execute("SELECT 1 FROM scores WHERE job_id = ? LIMIT 1", (q["id"],)).fetchone() is not None
         out.append({**q, "days": days, "links": links, "tiers": descriptions.tiers_tried(conn, q["id"]),
+                    "actions": allowed_actions(q["status"], scored), "undo": undo_info(conn, q["id"], q["status"], scored),
+                    "bulk": bulk_names("missing", q["status"], scored, None),
                     "locations": [r["location_text"] for r in conn.execute(
                         "SELECT location_text FROM job_locations WHERE job_id = ? ORDER BY id", (q["id"],))]})
     return out
@@ -362,11 +315,12 @@ def job_detail(conn: sqlite3.Connection, cfg: dict, job_id: int) -> dict | None:
         "id": job["id"], "title": job["title"], "company": job["company"], "status": job["status"], "repost": bool(job["repost"]),
         "queued": queued, "added": queued and not job["description_missing"], "can_paste": bool(job["description_missing"]),
         "partial_chars": len(partial[0]) if job["description_missing"] and (partial := descriptions.partial_text(conn, job_id)) else 0,
-        "actions": allowed_actions(job["status"], sc is not None), "can_approve": any(d["status"] != "approved" for d in docs),
+        "actions": allowed_actions(job["status"], sc is not None), "more": more_actions(job["status"], sc is not None, "offers" if job["status"] == "offer" else "job"), "can_approve": any(d["status"] != "approved" for d in docs),
         "undo": undo_info(conn, job_id, job["status"], sc is not None), "approved_kinds": [d["raw_kind"] for d in docs if d["status"] == "approved"],
         "posted": report.posted_line(job["posted_on"]), "first_seen": job["first_seen_at"], "last_seen": job["last_seen_at"],
         "locations": [r["location_text"] for r in conn.execute("SELECT location_text FROM job_locations WHERE job_id = ? ORDER BY id", (job_id,))],
         "notes": report.notes(conn, job_id) + ([report.CLOSED] if job["closed_at"] else []),
+        "rounds": interviews.list_rounds(conn, job_id, cfg["timezone"]), "job_notes": interviews.list_notes(conn, job_id, cfg["timezone"]), "round_kinds": interviews.KINDS,
         "sources": sources, "score": score, "documents": docs, "description": job["description"] or "",
         "description_note": report.NO_DESCRIPTION.format(cap=cfg["scoring"]["no_description_cap"]) if job["description_missing"] else "",
         "language_note": report.NON_ENGLISH.format(cap=cfg["scoring"]["non_english_cap"], band=report.band(cfg["scoring"]["non_english_cap"], cfg)) if posting_is_german(job["description"], cfg) else "",
@@ -382,38 +336,83 @@ def _job_page(conn: sqlite3.Connection, cfg: dict, where: str, order: str, page:
     page = min(max(1, page), pages)
     rows = conn.execute(
         f"""SELECT j.id, j.title, j.company, j.status, j.repost, s.overall,
-                   (SELECT MAX(h.changed_at) FROM status_history h WHERE h.job_id = j.id AND h.to_status = 'applied') AS applied_at
+                   (SELECT MAX(h.changed_at) FROM status_history h WHERE h.job_id = j.id AND h.to_status = 'applied') AS applied_at,
+                   (SELECT h.changed_at FROM status_history h WHERE h.job_id = j.id AND h.to_status = j.status ORDER BY h.id DESC LIMIT 1) AS stage_at
             FROM jobs j LEFT JOIN scores s ON s.id = (SELECT MAX(id) FROM scores WHERE job_id = j.id)
             WHERE {where} ORDER BY {order} LIMIT ? OFFSET ?""", (*params, PAGE_SIZE, (page - 1) * PAGE_SIZE)).fetchall()
     queued = {r["id"]: r["description_missing"] for r in conn.execute(
         f"SELECT j.id, j.description_missing FROM jobs j WHERE {descriptions.QUEUED.format(j='j')}")}
     out = [{"id": r["id"], "title": r["title"], "company": r["company"], "status": r["status"], "repost": bool(r["repost"]),
             "queued": r["id"] in queued, "added": r["id"] in queued and not queued[r["id"]],
-            "score": None if r["id"] in queued else r["overall"], "applied_at": r["applied_at"],
+            "score": None if r["id"] in queued else r["overall"], "applied_at": r["applied_at"], "stage_at": r["stage_at"],
             "band": "" if r["id"] in queued or r["overall"] is None else report.band(r["overall"], cfg)} for r in rows]
     return out, pages
 
 
+def bulk_names(page: str, status: str, scored: bool, undo: dict | None) -> str:
+    """The actions of the selection bar that this job can take on this page, space separated (the `data-actions` of its row)."""
+    names = [a for a in statusflow.PAGE_ACTIONS[page] if (undo is not None if a == "undo" else statusflow.can(a, status, scored))]
+    return " ".join(names)
+
+
+def more_actions(status: str, scored: bool, page: str) -> list[tuple[str, str]]:
+    """(action, label) of the stage actions a job can take that have no per-job button: they link to the confirmation page."""
+    return [(a, statusflow.label(a, page)) for a in statusflow.available_actions(status, scored) if a not in statusflow.BUTTON_ACTIONS]
+
+
+def _row_actions(conn: sqlite3.Connection, r: dict, page: str) -> bool:
+    """Add `actions`, `undo`, `more` and `bulk` to a list row; returns whether the job has a score."""
+    scored = conn.execute("SELECT 1 FROM scores WHERE job_id = ? LIMIT 1", (r["id"],)).fetchone() is not None
+    r["actions"] = allowed_actions(r["status"], scored)
+    r["undo"] = undo_info(conn, r["id"], r["status"], scored)
+    r["more"] = more_actions(r["status"], scored, page)
+    r["bulk"] = bulk_names(page, r["status"], scored, r["undo"])
+    return scored
+
+
 def job_list(conn: sqlite3.Connection, cfg: dict, page: int) -> tuple[list[dict], int]:
-    """(rows of one page, number of pages) of the open jobs that are not applied and not queued on /missing (waiting for a pasted
+    """(rows of one page, number of pages) of the open jobs that are not applied (or further) and not queued on /missing (waiting for a pasted
     description), best latest score first, jobs without a score last. Other not_selected jobs are listed (decision of 11 Nov 2026)."""
     where = ("j.status NOT IN ({}) AND NOT (j.description_missing = 1 AND ".format(",".join(f"'{s}'" for s in HIDDEN_FROM_OPEN))
              + descriptions.QUEUED.format(j="j") + ")")
-    return _job_page(conn, cfg, where, "s.overall IS NULL, s.overall DESC, j.id", page)
+    rows, pages = _job_page(conn, cfg, where, "s.overall IS NULL, s.overall DESC, j.id", page)
+    for r in rows:
+        _row_actions(conn, r, "list")
+    return rows, pages
+
+
+STAGE_STATUSES = {page: status for status, page in statusflow.STAGE_PAGES.items()}      # page -> status
+
+
+def stage_list(conn: sqlite3.Connection, cfg: dict, status: str, page: int) -> tuple[list[dict], int]:
+    """(rows of one page, number of pages) of the jobs in a stage after the application, newest in the stage first (no recorded
+    date last), with the buttons, the days in the stage and the approved PDFs of each."""
+    page_key = statusflow.STAGE_PAGES[status]
+    rows, pages = _job_page(conn, cfg, "j.status = ?", "stage_at IS NULL, stage_at DESC, j.id", page, (status,))
+    now = datetime.now(timezone.utc)
+    upcoming = (interviews.next_rounds(conn, [r["id"] for r in rows], now.strftime("%Y-%m-%dT%H:%M:%SZ"), cfg["timezone"])
+                if page_key in statusflow.NEXT_INTERVIEW_PAGES else {})
+    for r in rows:
+        _row_actions(conn, r, page_key)
+        r["next_interview"] = upcoming.get(r["id"])
+        try:
+            r["days"] = max(0, (now - datetime.strptime(r["stage_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)).days)
+        except (TypeError, ValueError):
+            r["days"] = None
+        r["pdfs"] = [{"kind": d["kind"], "label": DOC_LABELS.get(d["kind"], d["kind"])} for d in conn.execute(
+            "SELECT kind FROM documents WHERE job_id = ? AND status = 'approved' AND COALESCE(approved_pdf_path, '') <> '' ORDER BY kind",
+            (r["id"],))]
+    return rows, pages
+
+
+def stage_count(conn: sqlite3.Connection, status: str) -> int:
+    return conn.execute("SELECT COUNT(*) FROM jobs WHERE status = ?", (status,)).fetchone()[0]
 
 
 def applied_list(conn: sqlite3.Connection, cfg: dict, page: int) -> tuple[list[dict], int]:
     """(rows of one page, number of pages) of the applied jobs, newest application first (no recorded date last), with the
     buttons and the approved PDFs of each."""
-    rows, pages = _job_page(conn, cfg, "j.status = 'applied'", "applied_at IS NULL, applied_at DESC, j.id", page)
-    for r in rows:
-        scored = conn.execute("SELECT 1 FROM scores WHERE job_id = ? LIMIT 1", (r["id"],)).fetchone() is not None
-        r["actions"] = allowed_actions(r["status"], scored)
-        r["undo"] = undo_info(conn, r["id"], r["status"], scored)
-        r["pdfs"] = [{"kind": d["kind"], "label": DOC_LABELS.get(d["kind"], d["kind"])} for d in conn.execute(
-            "SELECT kind FROM documents WHERE job_id = ? AND status = 'approved' AND COALESCE(approved_pdf_path, '') <> '' ORDER BY kind",
-            (r["id"],))]
-    return rows, pages
+    return stage_list(conn, cfg, "applied", page)
 
 
 def _host_of(header: str) -> str:
@@ -446,10 +445,50 @@ TOKEN_REFUSED = ("The request was refused: the form is out of date or did not co
                  "server was restarted, or the token is missing). Reload the page and try again. Nothing was changed.")
 
 
+def parse_bulk_ids(raw: list[str]) -> tuple[list[int], str | None]:
+    """(the job ids in order, duplicates dropped, None) or ([], why not) for the ids of a selection (a list of comma-joined strings)."""
+    ids: list[int] = []
+    for part in ",".join(raw).split(","):
+        part = part.strip()
+        if not part:
+            continue
+        if not (part.isascii() and part.isdigit()) or len(part) > 12 or int(part) < 1:
+            return [], "The selection holds something that is not a job number. Nothing was changed."
+        if int(part) not in ids:
+            ids.append(int(part))
+    if not ids:
+        return [], "No job is selected. Nothing was changed."
+    if len(ids) > MAX_BULK:
+        return [], f"Too many jobs are selected (at most {MAX_BULK} at once). Nothing was changed."
+    return ids, None
+
+
+def bulk_page_no(raw: str | None) -> int:
+    return int(raw) if raw and raw.isascii() and raw.isdigit() and 0 < int(raw) < 10**6 else 1
+
+
+def bulk_path(nxt: str, page: int, ids: list[int], gone: bool = False) -> str:
+    """The page a bulk change sends the user back to (never a free URL), with `?page=N` kept on the pages that have it."""
+    if nxt == "job":
+        return "/jobs" if gone or len(ids) != 1 else f"/jobs/{ids[0]}"
+    path = BULK_PATHS[nxt]
+    return f"{path}?page={page}" if nxt in BULK_PAGED and page > 1 else path
+
+
+def bulk_label(action: str, nxt: str) -> str:
+    return {"undo": "Undo", "reject": "Reject"}.get(action) or statusflow.label(action, nxt)
+
+
+def _names(items: list[str]) -> str:
+    shown = items[:BULK_LISTED]
+    return ", ".join(shown) + (f", and {len(items) - BULK_LISTED} more" if len(items) > BULK_LISTED else "")
+
+
 def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tuple[str, ...] = ALLOWED_HOSTS,
-               login: "weblogin.WebLogin | None" = None) -> FastAPI:
+               login: "weblogin.WebLogin | None" = None, demo: bool = False) -> FastAPI:
     """Build the app. `db_path` defaults to `paths.database`; `allowed_hosts` are the Host headers served (a defence
-    against DNS rebinding). `login` None: no login (the PC); a WebLogin: every page but /login and /static needs the cookie."""
+    against DNS rebinding). `login` None: no login (the PC); a WebLogin: every page but /login and /static needs the cookie.
+    `demo` (v0.100.0, scripts/freeze_demo.py): the templates leave out every form, button and script that writes, and every request but GET and HEAD gets 405."""
     path = Path(db_path) if db_path else resolve_path(cfg["paths"]["database"])
     app = FastAPI(title="Recruitment", docs_url=None, redoc_url=None, openapi_url=None)
     secret = secrets.token_bytes(32)                      # new at every start: forms of an earlier run are refused
@@ -468,7 +507,10 @@ def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tupl
 
     env = jinja2.Environment(loader=jinja2.FileSystemLoader(HERE / "templates"), autoescape=True)
     env.filters["upfirst"] = lambda s: s[:1].upper() + s[1:]      # unlike |capitalize it leaves the rest of the text alone
-    env.globals.update(csrf=csrf, labels=LABELS, login_on=login is not None)
+    env.globals.update(csrf=csrf, labels=LABELS, login_on=login is not None, demo=demo, page_actions=statusflow.PAGE_ACTIONS, round_kinds=interviews.KINDS, action_label=bulk_label,
+                       script_paths=SCRIPT_PATHS, swipe=statusflow.SWIPE, careful=statusflow.CAREFUL, comment_max=COMMENT_MAX,
+                       application_pages={p: statusflow.STAGE_PAGE_TEXT[p][0] for p in statusflow.APPLICATION_PAGES},
+                       stage_empty={p: t[1] for p, t in statusflow.STAGE_PAGE_TEXT.items()})
     templates = Jinja2Templates(env=env)
     app.mount("/static", StaticFiles(directory=HERE / "static"), name="static")
     app.state.open_db = lambda: open_readonly(path)
@@ -485,6 +527,8 @@ def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tupl
         path = request.url.path
         if _host_of(request.headers.get("host", "")) not in allowed_hosts:
             response = PlainTextResponse("Bad Host header", status_code=400)
+        elif demo and request.method not in ("GET", "HEAD"):
+            response = PlainTextResponse("Read-only demo. Nothing was changed.", status_code=405, headers={"Allow": "GET, HEAD"})
         elif request.method not in ("GET", "HEAD", "OPTIONS") and not _origin_ok(request):
             response = PlainTextResponse("Foreign origin refused", status_code=403)
         elif path == "/logout" and request.method == "POST" and login is not None and not logged_in(request):
@@ -500,7 +544,7 @@ def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tupl
             response = await call_next(request)
         for name, value in HEADERS.items():
             response.headers[name] = value
-        if path in CHART_PATHS:
+        if path in CHART_PATHS or path in SCRIPT_PATHS or (JOB_PAGE.fullmatch(path) and response.status_code == 200):
             response.headers["Content-Security-Policy"] = CHART_CSP
         return response
 
@@ -518,8 +562,8 @@ def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tupl
     def back(form: dict, job_id: int, lines: list, gone: bool = False) -> RedirectResponse:
         nxt = form.get("next") if form.get("next") in NEXT_PAGES else "job"
         if gone:                                           # the job is not open any more: its page would be a 404
-            return go({"top": "/", "applied": "/applied"}.get(nxt, "/jobs"), lines)
-        return go({"top": "/", "job": f"/jobs/{job_id}", "list": "/jobs", "applied": "/applied"}[nxt], lines)
+            return go(PAGE_PATHS.get(nxt, "/jobs"), lines)
+        return go({**PAGE_PATHS, "job": f"/jobs/{job_id}"}[nxt], lines)
 
     async def read_form(request: Request, max_body: int = MAX_BODY) -> dict:
         """The fields of a small urlencoded POST body (415, 413 and 400 on a bad one)."""
@@ -624,14 +668,15 @@ def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tupl
         with contextlib.closing(app.state.open_db()) as conn:
             batch_id = latest_batch(conn)
             rep = report.collect(conn, cfg, batch_id, hide_acted=True) if batch_id else None
-            actions, undo = {}, {}
+            actions, undo, bulk = {}, {}, {}
             if rep and rep.jobs:                           # every job of a top 10 has a score
                 ids = [j.job_id for j in rep.jobs]
                 for r in conn.execute(f"SELECT id, status FROM jobs WHERE id IN ({','.join('?' * len(ids))})", ids):
                     actions[r["id"]] = allowed_actions(r["status"], True)
                     undo[r["id"]] = undo_info(conn, r["id"], r["status"], True)
+                    bulk[r["id"]] = bulk_names("top", r["status"], True, undo[r["id"]])
         return render(request, "top10.html", rep=rep, top_n=cfg["scoring"]["top_n"], outside=report.outside_line(rep, cfg) if rep else "",
-                      actions=actions, undo=undo)
+                      actions=actions, undo=undo, bulk=bulk)
 
     @app.get("/jobs", response_class=HTMLResponse)
     def jobs(request: Request, page: str = "1"):
@@ -645,7 +690,22 @@ def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tupl
         n = int(page) if page.isascii() and page.isdigit() and 0 < int(page) < 10**6 else 1
         with contextlib.closing(app.state.open_db()) as conn:
             rows, pages = applied_list(conn, cfg, n)
-        return render(request, "applied.html", rows=rows, page_no=min(n, pages), pages=pages)
+            total = stage_count(conn, "applied")
+        return render(request, "applied.html", rows=rows, page_no=min(n, pages), pages=pages, total=total)
+
+    def stage_page(page_key: str):
+        status = STAGE_STATUSES[page_key]
+
+        def view(request: Request, page: str = "1"):
+            n = int(page) if page.isascii() and page.isdigit() and 0 < int(page) < 10**6 else 1
+            with contextlib.closing(app.state.open_db()) as conn:
+                rows, pages = stage_list(conn, cfg, status, n)
+                total = stage_count(conn, status)
+            return render(request, "stage.html", rows=rows, page_no=min(n, pages), pages=pages, total=total, page_key=page_key, next_column=page_key in statusflow.NEXT_INTERVIEW_PAGES)
+        return view
+
+    for _page in statusflow.APPLICATION_PAGES[1:]:          # /interviews, /offers, /rejected, /withdrawn (v0.96.0); /applied has its own route above
+        app.add_api_route(f"/{_page}", stage_page(_page), methods=["GET"], response_class=HTMLResponse, name=f"stage_{_page}")
 
     @app.get("/jobs/{job_id}", response_class=HTMLResponse)
     def job(request: Request, job_id: str):
@@ -704,28 +764,58 @@ def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tupl
     def _status_line(job_id: int, row, text: str) -> str:
         return f"Job {job_id} ({row['title']}, {row['company']}) {text}"
 
+    def _status_one(conn, jid: int, action: str, to_status: str, note: str, extra=None) -> tuple[str, str, object, bool]:
+        """One status change under its own write lock (the body of the single buttons and of the bulk route):
+        (level, line, row, gone). `gone`: the job is not open any more. Raises sqlite3.Error when the database is busy.
+        `extra(conn)` writes in the same transaction (the first interview round, v0.99.0); it runs after the checks and before the status, and a refused status writes nothing."""
+        conn.execute("BEGIN IMMEDIATE")                       # the status is checked and changed under one write lock
+        try:
+            row = conn.execute("SELECT title, company, status FROM jobs WHERE id = ?", (jid,)).fetchone()
+            if row is None:
+                return "refused", f"Job {jid} is not open any more. Nothing was changed.", None, True
+            scored = conn.execute("SELECT 1 FROM scores WHERE job_id = ? LIMIT 1", (jid,)).fetchone() is not None
+            why = refusal(action, jid, row["status"], scored)
+            if why:
+                return "refused", why, row, False
+            if extra is not None:
+                extra(conn)
+            db.set_status(conn, jid, to_status, note=note)
+        finally:
+            if conn.in_transaction:
+                conn.rollback()
+        return "ok", _status_line(jid, row, f"is now {to_status} (was {row['status']})."), row, False
+
+    def _undo_one(conn, jid: int, confirmed: bool) -> tuple[str, str, object, bool, str | None]:
+        """One undo under its own write lock: (level, line, row, gone, the status restored). `level` is `unconfirmed` when the
+        job needs the user's confirmation and `confirmed` is False (nothing was changed)."""
+        conn.execute("BEGIN IMMEDIATE")                       # the history is read and the status changed under one write lock
+        try:
+            row = conn.execute("SELECT title, company, status FROM jobs WHERE id = ?", (jid,)).fetchone()
+            if row is None:
+                return "refused", f"Job {jid} is not open any more. Nothing was changed.", None, True, None
+            scored = conn.execute("SELECT 1 FROM scores WHERE job_id = ? LIMIT 1", (jid,)).fetchone() is not None
+            target, why = undo_target(conn, jid, row["status"], scored)
+            if why:
+                return "refused", why, row, False, None
+            if row["status"] != "shortlisted" and not confirmed:
+                return "unconfirmed", "Not confirmed. Nothing was changed.", row, False, target
+            db.set_status(conn, jid, target, note=UNDO_NOTE)
+        finally:
+            if conn.in_transaction:
+                conn.rollback()
+        return "ok", _status_line(jid, row, f"is back to {target} (it was {row['status']})."), row, False, target
+
     async def change_status(request: Request, job_id: str, action: str, to_status: str):
         jid, form = await verified(request, action, job_id)
         try:
             with contextlib.closing(app.state.open_rw()) as conn:
-                conn.execute("BEGIN IMMEDIATE")                   # the status is checked and changed under one write lock
-                try:
-                    row = conn.execute("SELECT title, company, status FROM jobs WHERE id = ?", (jid,)).fetchone()
-                    if row is None:
-                        return back(form, jid, [("refused", f"Job {jid} is not open any more. Nothing was changed.")], gone=True)
-                    scored = conn.execute("SELECT 1 FROM scores WHERE job_id = ? LIMIT 1", (jid,)).fetchone() is not None
-                    why = refusal(action, jid, row["status"], scored)
-                    if why:
-                        return back(form, jid, [("refused", why)])
-                    db.set_status(conn, jid, to_status, note="web")
-                finally:
-                    if conn.in_transaction:
-                        conn.rollback()
+                level, line, row, gone = _status_one(conn, jid, action, to_status, "web")
         except sqlite3.Error as exc:
             log.warning("web: %s on job %s failed: %s", action, jid, exc.__class__.__name__)
             return back(form, jid, DB_BUSY)
-        log.info("web: job %s %s -> %s", jid, row["status"], to_status)
-        return back(form, jid, [("ok", _status_line(jid, row, f"is now {to_status} (was {row['status']}).")) ])
+        if level == "ok":
+            log.info("web: job %s %s -> %s", jid, row["status"], to_status)
+        return back(form, jid, [(level, line)], gone=gone)
 
     @app.post("/jobs/{job_id}/shortlist")
     async def shortlist(request: Request, job_id: str):
@@ -751,6 +841,117 @@ def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tupl
             log.warning("web: approve on job %s failed: %s", jid, exc.__class__.__name__)
             return back(form, jid, DB_BUSY)
         return back(form, jid, approval.outcome_lines(res))
+
+    def _row_id(text: str) -> int | None:
+        return int(text) if text.isascii() and text.isdigit() and len(text) <= 12 else None
+
+    async def interview_change(request: Request, job_id: str, action: str, what: str, work, refused_to=None, checked=None):
+        """One add, edit or delete of a round or a note (v0.98.0): CSRF per action and job, one write under BEGIN IMMEDIATE, a message back on the job page.
+        `work(conn, jid, form)` returns (done, message); the texts of notes and places are never logged. `refused_to(jid)`: the path a refused input goes
+        back to (default: the job page). `checked`: the (jid, form) of a POST that `verified` already read."""
+        jid, form = checked or await verified(request, action, job_id, max_body=MAX_INTERVIEW_BODY)
+        try:
+            with contextlib.closing(app.state.open_rw()) as conn:
+                conn.execute("BEGIN IMMEDIATE")
+                try:
+                    if conn.execute("SELECT 1 FROM jobs WHERE id = ?", (jid,)).fetchone() is None:
+                        return back(form, jid, [("refused", f"Job {jid} is not open any more. Nothing was changed.")], gone=True)
+                    done, message = work(conn, jid, form)
+                    conn.commit()
+                finally:
+                    if conn.in_transaction:
+                        conn.rollback()
+        except interviews.Refused as exc:
+            if refused_to is not None:
+                return go(refused_to(jid), [("refused", str(exc))])
+            return back(form, jid, [("refused", str(exc))])
+        except sqlite3.Error as exc:
+            log.warning("web: %s on job %s failed: %s", action, jid, exc.__class__.__name__)
+            return back(form, jid, DB_BUSY)
+        if done:
+            log.info("web: job %s %s", jid, what)
+        return back(form, jid, [("ok" if done else "refused", message)])
+
+    @app.post("/jobs/{job_id}/interviews")
+    async def add_interview(request: Request, job_id: str):
+        def work(conn, jid, form):
+            interviews.add_round(conn, jid, form.get("day", ""), form.get("clock", ""), form.get("kind", ""), form.get("place", ""),
+                                 form.get("notes", ""), cfg["timezone"])
+            return True, "Interview round added."
+        return await interview_change(request, job_id, "interviews", "interview round added", work)
+
+    def _confirm_page(kind: str, job_id: str, item_id: str):
+        """The server confirmation page of a delete (read-only): what confirm.js asks in the browser, and the fallback without script."""
+        jid, iid = _row_id(job_id), _row_id(item_id)
+        if jid is None or iid is None:
+            raise StarletteHTTPException(404)
+        with contextlib.closing(app.state.open_db()) as conn:
+            if conn.execute("SELECT 1 FROM jobs WHERE id = ?", (jid,)).fetchone() is None:
+                raise StarletteHTTPException(404)
+            item = (interviews.get_round if kind == "round" else interviews.get_note)(conn, jid, iid, cfg["timezone"])
+        if item is None:
+            raise StarletteHTTPException(404)
+        return jid, iid, item
+
+    @app.get("/jobs/{job_id}/interviews/{round_id}/delete", response_class=HTMLResponse)
+    def delete_interview_page(request: Request, job_id: str, round_id: str):
+        jid, rid, item = _confirm_page("round", job_id, round_id)
+        return render(request, "delete_confirm.html", j={"id": jid}, kind="round", item=item, action=f"/jobs/{jid}/interviews/{rid}/delete", purpose=f"interview-delete:{jid}")
+
+    @app.post("/jobs/{job_id}/interviews/{round_id}/delete")
+    async def delete_interview(request: Request, job_id: str, round_id: str):
+        """Deletes only with `confirm=yes` (confirm.js or the confirmation page); anything else goes to the confirmation page, nothing changed."""
+        def work(conn, jid, form):
+            rid = _row_id(round_id)
+            if rid is not None and interviews.delete_round(conn, jid, rid):
+                return True, "Interview round deleted."
+            return False, "That interview round does not exist any more. Nothing was changed."
+        return await _confirmed_change(request, job_id, "interview-delete", "interview round deleted", work,
+                                       lambda jid: f"/jobs/{jid}/interviews/{rid}/delete" if (rid := _row_id(round_id)) is not None else f"/jobs/{jid}")
+
+    @app.get("/jobs/{job_id}/interviews/{round_id}/edit", response_class=HTMLResponse)
+    def edit_interview_page(request: Request, job_id: str, round_id: str):
+        jid, rid, item = _confirm_page("round", job_id, round_id)
+        return render(request, "interview_edit.html", j={"id": jid}, r=item, round_kinds=interviews.KINDS)
+
+    @app.post("/jobs/{job_id}/interviews/{round_id}")
+    async def edit_interview(request: Request, job_id: str, round_id: str):
+        def work(conn, jid, form):
+            rid = _row_id(round_id)
+            if rid is not None and interviews.update_round(conn, jid, rid, form.get("day", ""), form.get("clock", ""), form.get("kind", ""),
+                                                           form.get("place", ""), form.get("notes", ""), cfg["timezone"]):
+                return True, "Interview round changed."
+            return False, "That interview round does not exist any more. Nothing was changed."
+        return await interview_change(request, job_id, "interview-edit", "interview round changed", work, lambda jid: f"/jobs/{jid}/interviews/{round_id}/edit")
+
+    async def _confirmed_change(request: Request, job_id: str, action: str, what: str, work, page):
+        """A delete: the token is checked first, then `confirm=yes`; without it nothing is opened or changed and the user goes to the confirmation page."""
+        jid, form = await verified(request, action, job_id, max_body=MAX_INTERVIEW_BODY)
+        if form.get("confirm") != "yes":
+            return go(page(jid), [("refused", "Not confirmed. Nothing was changed.")])
+        return await interview_change(request, job_id, action, what, work, checked=(jid, form))
+
+    @app.post("/jobs/{job_id}/notes")
+    async def add_job_note(request: Request, job_id: str):
+        def work(conn, jid, form):
+            interviews.add_note(conn, jid, form.get("text", ""))
+            return True, "Note added."
+        return await interview_change(request, job_id, "notes", "note added", work)
+
+    @app.get("/jobs/{job_id}/notes/{note_id}/delete", response_class=HTMLResponse)
+    def delete_job_note_page(request: Request, job_id: str, note_id: str):
+        jid, nid, item = _confirm_page("note", job_id, note_id)
+        return render(request, "delete_confirm.html", j={"id": jid}, kind="note", item=item, action=f"/jobs/{jid}/notes/{nid}/delete", purpose=f"note-delete:{jid}")
+
+    @app.post("/jobs/{job_id}/notes/{note_id}/delete")
+    async def delete_job_note(request: Request, job_id: str, note_id: str):
+        def work(conn, jid, form):
+            nid = _row_id(note_id)
+            if nid is not None and interviews.delete_note(conn, jid, nid):
+                return True, "Note deleted."
+            return False, "That note does not exist any more. Nothing was changed."
+        return await _confirmed_change(request, job_id, "note-delete", "note deleted", work,
+                                       lambda jid: f"/jobs/{jid}/notes/{nid}/delete" if (nid := _row_id(note_id)) is not None else f"/jobs/{jid}")
 
     def _accept_text(form: dict) -> str | None:
         comment = "".join(c for c in form.get("comment", "") if c.isprintable() or c.isspace())
@@ -1049,26 +1250,162 @@ def create_app(cfg: dict, db_path: str | Path | None = None, allowed_hosts: tupl
         nxt = form.get("next") if form.get("next") in NEXT_PAGES else "job"
         try:
             with contextlib.closing(app.state.open_rw()) as conn:
-                conn.execute("BEGIN IMMEDIATE")                   # the history is read and the status changed under one write lock
-                try:
-                    row = conn.execute("SELECT title, company, status FROM jobs WHERE id = ?", (jid,)).fetchone()
-                    if row is None:
-                        return back(form, jid, [("refused", f"Job {jid} is not open any more. Nothing was changed.")], gone=True)
-                    scored = conn.execute("SELECT 1 FROM scores WHERE job_id = ? LIMIT 1", (jid,)).fetchone() is not None
-                    target, why = undo_target(conn, jid, row["status"], scored)
-                    if why:
-                        return back(form, jid, [("refused", why)])
-                    if row["status"] == "applied" and form.get("confirm") != "yes":
-                        return go(f"/jobs/{jid}/undo-status?next={nxt}", [("refused", "Not confirmed. Nothing was changed.")])
-                    db.set_status(conn, jid, target, note=UNDO_NOTE)
-                finally:
-                    if conn.in_transaction:
-                        conn.rollback()
+                level, line, row, gone, target = _undo_one(conn, jid, form.get("confirm") == "yes")
         except sqlite3.Error as exc:
             log.warning("web: undo on job %s failed: %s", jid, exc.__class__.__name__)
             return back(form, jid, DB_BUSY)
-        log.info("web: job %s %s -> %s (undo)", jid, row["status"], target)
-        return back(form, jid, [("ok", _status_line(jid, row, f"is back to {target} (it was {row['status']})."))])
+        if level == "unconfirmed":
+            return go(f"/jobs/{jid}/undo-status?next={nxt}", [("refused", line)])
+        if level == "ok":
+            log.info("web: job %s %s -> %s (undo)", jid, row["status"], target)
+        return back(form, jid, [(level, line)], gone=gone)
+
+    # --- the bulk status change (v0.96.0): a confirmation page (GET) and the change (POST) for a selection of jobs --------
+
+    def bulk_entries(conn, action: str, ids: list[int]) -> list[dict]:
+        """For each job of the selection: what the action would do, or why it would be skipped (the server decides again on POST)."""
+        out = []
+        for jid in ids:
+            row = conn.execute("SELECT id, title, company, status FROM jobs WHERE id = ?", (jid,)).fetchone()
+            if row is None:
+                out.append({"id": jid, "title": None, "company": "", "status": "", "will": None,
+                            "skipped": f"Job {jid} is not open any more. Nothing was changed."})
+                continue
+            scored = conn.execute("SELECT 1 FROM scores WHERE job_id = ? LIMIT 1", (jid,)).fetchone() is not None
+            entry = {"id": jid, "title": row["title"], "company": row["company"], "status": row["status"], "will": None, "skipped": None}
+            if action == "undo":
+                target, why = undo_target(conn, jid, row["status"], scored)
+                entry["will"], entry["skipped"] = (f"will be set back to {target}" if target else None), why
+            else:
+                why = refusal(action, jid, row["status"], scored)
+                entry["skipped"] = why
+                if not why:
+                    entry["will"] = "will be rejected and archived" if action == "reject" else f"will become {statusflow.FORWARD[action][0]}"
+            out.append(entry)
+        return out
+
+    def bulk_confirm_page(request: Request, action: str, ids: list[int], nxt: str, page: int, problem: str | None = None, status: int = 200):
+        entries, token = [], ""
+        if problem is None:
+            with contextlib.closing(app.state.open_db()) as conn:
+                entries = bulk_entries(conn, action, ids)
+            token = csrf(f"bulk:{action}")
+        n_ok = sum(1 for e in entries if e["will"])
+        return render(request, "bulk_confirm.html", status, problem=problem, action=action, label=bulk_label(action, nxt) if action in BULK_ACTIONS else "",
+                      entries=entries, n_ok=n_ok, n_skipped=len(entries) - n_ok, ids_csv=",".join(map(str, ids)), nxt=nxt, page=page,
+                      token=token, comment_max=COMMENT_MAX, cancel=bulk_path(nxt, page, ids) if nxt in BULK_PAGES else "/",
+                      applied_warning=action == "reject" and any(e["will"] and e["status"] == "applied" for e in entries))
+
+    def bulk_problem(action: str, nxt: str, ids: list[int]) -> str | None:
+        """Why this action on this page for these ids is not accepted at all, or None."""
+        if action not in BULK_ACTIONS:
+            return "This action is not known. Nothing was changed."
+        if nxt not in BULK_PAGES:
+            return "This page is not known. Nothing was changed."
+        if nxt == "job":
+            if len(ids) != 1:
+                return "From a job page exactly one job can be changed. Nothing was changed."
+        elif action not in statusflow.PAGE_ACTIONS[nxt]:
+            return f"{bulk_label(action, nxt)} is not offered on this page. Nothing was changed."
+        return None
+
+    @app.get("/bulk-status", response_class=HTMLResponse)
+    def bulk_status_page(request: Request):
+        """The confirmation page of a selection (read-only, no JavaScript): nothing happens until its form is sent."""
+        q = request.query_params
+        action, nxt, page = q.get("action", ""), q.get("next", ""), bulk_page_no(q.get("page"))
+        ids, why = parse_bulk_ids(q.getlist("id"))
+        problem = why or bulk_problem(action, nxt, ids)
+        if problem:
+            return bulk_confirm_page(request, action, [], nxt if nxt in BULK_PAGES else "top", page, problem=problem, status=400)
+        return bulk_confirm_page(request, action, ids, nxt, page)
+
+    @app.post("/bulk-status")
+    async def bulk_status(request: Request):
+        """Change the status of a selection of jobs after the confirmation page (goal.md 5.7). The token is per action."""
+        form = await read_form(request)
+        action = form.get("action", "")
+        if action not in BULK_ACTIONS:
+            raise StarletteHTTPException(400, "This action is not known. Nothing was changed.")
+        if not hmac.compare_digest(form.get("csrf", "").encode(), csrf(f"bulk:{action}").encode()):
+            raise StarletteHTTPException(403, TOKEN_REFUSED)                       # before the database is opened
+        nxt, page = form.get("next", ""), bulk_page_no(form.get("page"))
+        ids, why = parse_bulk_ids([form.get("ids", "")])
+        home = bulk_path(nxt, page, ids) if nxt in BULK_PAGES and (nxt != "job" or len(ids) == 1) else "/"
+        if why := why or bulk_problem(action, nxt, ids):
+            return go(home if nxt != "job" else "/jobs", [("refused", why)])
+        query = "&".join(f"id={i}" for i in ids)
+        again = f"/bulk-status?action={action}&{query}&next={nxt}&page={page}"
+        if form.get("confirm") != "yes":
+            return go(again, [("refused", "Not confirmed. Nothing was changed.")])
+        comment = rejection.clean_comment(form.get("comment", "")) if action == "reject" else ""
+        if len(comment) > COMMENT_MAX:
+            return go(again, [("refused", f"The comment is longer than {COMMENT_MAX} characters. Nothing was changed.")])
+        first_round = None                                                          # the optional first interview round of the sheet (v0.99.0): one job, date and time together
+        if action == "interview" and (form.get("day", "").strip() or form.get("clock", "").strip()):
+            try:
+                if len(ids) != 1:
+                    raise interviews.Refused("A date can be given for one job only. Nothing was changed.")
+                if not (form.get("day", "").strip() and form.get("clock", "").strip()):
+                    raise interviews.Refused("Give the date and the time of the interview round together, or neither. Nothing was changed.")
+                first_round = interviews.parse_round(form["day"], form["clock"], form.get("kind") or interviews.KINDS[0], "", "", cfg["timezone"])
+            except interviews.Refused as exc:
+                return go(again, [("refused", str(exc))])
+        done: list[str] = []                                                        # the names of the jobs that were changed
+        skipped: list[str] = []                                                     # why the others were not
+        archive_ids: list[str] = []
+        left: list[int] = []                                                        # the jobs not reached when the database got busy
+        gone_any = False
+        try:
+            with contextlib.closing(app.state.open_rw()) as conn:
+                for n, jid in enumerate(ids):
+                    try:
+                        if action == "undo":
+                            level, line, row, gone, target = _undo_one(conn, jid, True)
+                            to_status = target
+                        elif action == "reject":
+                            try:
+                                out = rejection.reject_job(conn, jid, comment, cfg["paths"]["approved"])
+                            except rejection.RejectRefused as exc:
+                                level, line, row, gone = "refused", str(exc), None, exc.gone
+                            else:
+                                level, line, row, gone, to_status = "ok", "", {"title": out.title, "company": out.company, "status": out.status}, True, None
+                                archive_ids.append(f"{jid} (archive entry {out.archive_id})")
+                        else:
+                            to_status = statusflow.FORWARD[action][0]
+                            level, line, row, gone = _status_one(conn, jid, action, to_status, BULK_NOTE,
+                                                                 extra=(lambda c: interviews.insert_round(c, jid, first_round)) if first_round else None)
+                    except sqlite3.Error as exc:
+                        log.warning("web: bulk %s on job %s failed: %s", action, jid, exc.__class__.__name__)
+                        left = ids[n:]
+                        break
+                    if level == "ok":
+                        done.append(f"{jid} {row['title']} ({row['company']})")
+                        log.info("web: job %s %s -> %s (bulk)", jid, row["status"], "archive" if action == "reject" else to_status)
+                    else:
+                        skipped.append(line)
+                    gone_any = gone_any or gone
+        except sqlite3.Error as exc:                                                # the database could not be opened or locked at all
+            log.warning("web: bulk %s failed: %s", action, exc.__class__.__name__)
+            left = ids
+        lines: list[tuple[str, str]] = []
+        jobs = f"{len(done)} job{'s' if len(done) != 1 else ''}"
+        if done and action == "reject":
+            lines.append(("ok", f"{jobs} rejected and moved to the archive (reason user_rejected): {_names(done)}. They are gone from the working lists. "
+                                f"To bring one back: python -m app restore-job <archive entry> ({_names(archive_ids)})."))
+        elif done and action == "undo":
+            lines.append(("ok", f"{jobs} set back one step: {_names(done)}."))
+        elif done:
+            added = f" Interview round on {' '.join(interviews.to_local(first_round['starts_at'], cfg['timezone']))} added." if first_round else ""
+            lines.append(("ok", f"{jobs} {'is' if len(done) == 1 else 'are'} now {statusflow.FORWARD[action][0]}: {_names(done)}.{added}"))
+        lines += [("refused", t) for t in skipped[:BULK_LISTED]]
+        if len(skipped) > BULK_LISTED:
+            lines.append(("refused", f"and {len(skipped) - BULK_LISTED} more were skipped."))
+        if left:
+            lines.append(("refused", f"{'Job' if len(left) == 1 else 'Jobs'} {_names([str(i) for i in left])} {'was' if len(left) == 1 else 'were'} not changed: "
+                                     + rejection.DB_BUSY_TEXT))
+        log.info("web: bulk %s: %s done, %s skipped, %s not reached", action, len(done), len(skipped), len(left))
+        return go(bulk_path(nxt, page, ids, gone=gone_any), lines)
 
     return app
 

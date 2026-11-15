@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+{% block title %}Edit interview round, job {{ j.id }} - Recruitment{% endblock %}
+{% block content %}
+<p><a href="/jobs/{{ j.id }}">&larr; Back to the job</a></p>
+<h1>Edit interview round {{ r.number }}</h1>
+<form method="post" action="/jobs/{{ j.id }}/interviews/{{ r.id }}" class="approve">
+  <input type="hidden" name="csrf" value="{{ csrf('interview-edit:' ~ j.id) }}">
+  <input type="date" name="day" required aria-label="Date" value="{{ r.date }}">
+  <input type="time" name="clock" required aria-label="Time" value="{{ r.time }}">
+  <select name="kind" aria-label="Kind">{% for k in round_kinds %}<option value="{{ k }}"{% if k == r.kind %} selected{% endif %}>{{ k }}</option>{% endfor %}</select>
+  <input type="text" name="place" maxlength="300" placeholder="Place or link text" aria-label="Place" value="{{ r.place }}">
+  <input type="text" name="notes" maxlength="2000" placeholder="Notes" aria-label="Notes" value="{{ r.notes }}">
+  <button type="submit">Save</button>
+  <a class="button" href="/jobs/{{ j.id }}">Cancel</a>
+</form>
+<p class="meta">Times are in your time zone. <a href="/jobs/{{ j.id }}/interviews/{{ r.id }}/delete">Delete this round&hellip;</a></p>
+{% endblock %}

@@ -3,8 +3,8 @@
     python scripts/seed_demo_db.py --db demo/jobs.db [--jobs 40] [--force]
 
 The database is built with the app's own code: `db.connect` (the schema and its migrations), `ingest_job` (dedup), `build_batch`
-and `import_results` (batches, scores, the top 10), `set_status` and `archive_job` (the later life of a job). Two runs on two
-days, about two thirds of the jobs scored in the first. All companies, titles and texts are made up; the scores are
+and `import_results` (batches, scores, the top 10), `set_status` and `archive_job` (the later life of a job: every status step is one
+that `app/statusflow.py` allows, with a fixed date). Two runs on two days, about two thirds of the jobs scored in the first. All companies, titles and texts are made up; the scores are
 deterministic. The fictional persona of profile/ (examples/persona/ in the private repository) is the candidate.
 
 To look at it (nothing here touches data/ or the real config):
@@ -25,7 +25,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from app import db                                                    # noqa: E402
+from app import db, interviews, statusflow                                        # noqa: E402
 from app.batch import build_batch, exchange_dir                       # noqa: E402
 from app.config import load_config                                    # noqa: E402
 from app.dedup import ingest_job                                      # noqa: E402
@@ -42,7 +42,20 @@ PLACES = ["Zürich", "Zürich", "Zürich", "Zug", "Winterthur", "Basel", "Bern",
 SOURCES = ["linkedin_alert", "jobsch_alert", "julius_alert", "ubs_alert", "greenhouse"]
 SKILLS = ["SQL", "requirements", "user stories", "Jira", "test cases", "UAT", "Python", "reporting", "stakeholder workshops", "Tableau",
           "data validation", "process automation", "Confluence", "regression testing", "SWIFT messages"]
-STATUS_PLAN = ["shortlisted", "shortlisted", "applied", "applied", "interview", "offer", "withdrawn"]       # given to the best scored jobs
+# The later life of the best scored jobs: the statuses a job goes through from `scored` (each step is checked against statusflow) and the
+# day of each step, in days after the first seeded day. One job still in interview, one plain applied job, two shortlisted, and every stage after the application.
+PATHS = [
+    (("shortlisted", "applied", "interview", "offer"), (1, 1, 2, 4)),
+    (("shortlisted", "applied", "rejected"), (1, 2, 4)),
+    (("shortlisted", "applied", "interview", "withdrawn"), (1, 1, 3, 4)),
+    (("shortlisted", "applied", "interview", "rejected"), (1, 2, 3, 4)),
+    (("shortlisted", "applied", "interview"), (1, 2, 3)),
+    (("shortlisted", "applied"), (1, 3)),
+    (("shortlisted",), (2,)),
+    (("shortlisted",), (3,)),
+    (("shortlisted", "applied", "interview", "offer", "withdrawn"), (1, 1, 2, 3, 4)),
+    (("shortlisted", "applied", "interview", "offer", "accepted"), (1, 1, 2, 3, 4)),        # the last path: two rounds and a note are added to it
+]
 REJECTED = 3
 
 
@@ -92,6 +105,21 @@ def run_day(conn, cfg, run_id: str, jobs: list[NormalizedJob], rng: random.Rando
     return ids
 
 
+def walk(conn, job_id: int, steps: tuple[str, ...], days: tuple[int, ...], day1: datetime, rng: random.Random) -> None:
+    """Move a job through `steps` from `scored` (each step must be allowed by statusflow), each history row dated `days` after `day1`."""
+    status = conn.execute("SELECT status FROM jobs WHERE id = ?", (job_id,)).fetchone()["status"]
+    for n, (to, offset) in enumerate(zip(steps, days)):
+        action = statusflow.ACTION_FOR_STATUS[to]
+        if not statusflow.can(action, status, True):
+            raise RuntimeError(f"the demo path of job {job_id} is not allowed: {status} -> {to}")
+        db.set_status(conn, job_id, to, "demo")
+        when = (day1 + timedelta(days=offset)).replace(hour=8 + 2 * n, minute=rng.randint(0, 59), second=0)      # later steps are later in the day too
+        with conn:
+            conn.execute("UPDATE status_history SET changed_at = ? WHERE id = (SELECT MAX(id) FROM status_history WHERE job_id = ?)",
+                         (when.strftime("%Y-%m-%dT%H:%M:%SZ"), job_id))
+        status = to
+
+
 def seed(db_path: Path, jobs: int = 40, force: bool = False, root: Path = ROOT) -> dict:
     """Builds the demo database at `db_path` and a demo-config.yaml next to it; returns counts."""
     db_path = Path(db_path).resolve()
@@ -119,10 +147,14 @@ def seed(db_path: Path, jobs: int = 40, force: bool = False, root: Path = ROOT) 
         if all_jobs[first:]:
             ids += run_day(conn, cfg, "demo-day2", all_jobs[first:], rng, day1 + timedelta(days=1))
         ranked = [r["job_id"] for r in conn.execute(
-            "SELECT job_id FROM scores ORDER BY overall DESC, job_id LIMIT ?", (len(STATUS_PLAN) + REJECTED,))]
-        for job_id, status in zip(ranked, STATUS_PLAN):
-            db.set_status(conn, job_id, status, "demo")
-        for job_id in ranked[len(STATUS_PLAN):]:
+            "SELECT job_id FROM scores ORDER BY overall DESC, job_id LIMIT ?", (len(PATHS) + REJECTED,))]
+        for job_id, (steps, days) in zip(ranked, PATHS):
+            walk(conn, job_id, steps, days, day1, random.Random(7 + job_id))
+        accepted = ranked[len(PATHS) - 1]                             # two rounds (made-up place and notes) and a note on the accepted job
+        interviews.add_round(conn, accepted, "2026-11-12", "10:00", "video", "Video call", "Introduction with the team lead", cfg["timezone"])
+        interviews.add_round(conn, accepted, "2026-11-13", "14:30", "onsite", "Main office", "Case study and questions about the contract", cfg["timezone"])
+        interviews.add_note(conn, accepted, "Offer received by phone; start date to be agreed.")
+        for job_id in ranked[len(PATHS):]:
             with conn:
                 db.archive_job(conn, job_id, "user", "not_interested", "demo")
         with conn:                                                    # one job that left the employer's list, one repost

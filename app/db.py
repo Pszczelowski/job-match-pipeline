@@ -12,10 +12,16 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # Status flow from goal.md 5.7, plus the outcomes of 5.3.1 / 5.5.
-STATUSES = (
+# Frozen lists: a released migration keeps the status list it was written with (the CHECK of its tables), however STATUSES grows.
+_STATUSES_V1 = (
     "new", "awaiting_llm", "scored", "not_selected", "shortlisted", "approved",
     "applied", "interview", "offer", "rejected", "withdrawn", "location_failed",
 )
+_STATUSES_V25 = (                                           # migration 25 (v0.98.0): 'accepted' after 'offer'
+    "new", "awaiting_llm", "scored", "not_selected", "shortlisted", "approved",
+    "applied", "interview", "offer", "accepted", "rejected", "withdrawn", "location_failed",
+)
+STATUSES = _STATUSES_V25
 RUN_STATUSES = ("running", "ok", "failed")
 FILTER_OUTCOMES = ("pass", "fail", "conditional")
 ARCHIVE_STAGES = ("filter", "user", "not_selected")
@@ -57,7 +63,7 @@ MIGRATIONS: list[str] = [
         location_text       TEXT,
         description         TEXT,
         description_missing INTEGER NOT NULL DEFAULT 1 CHECK (description_missing IN (0, 1)),
-        status              TEXT NOT NULL DEFAULT 'new' CHECK (status IN ({_in(STATUSES)})),
+        status              TEXT NOT NULL DEFAULT 'new' CHECK (status IN ({_in(_STATUSES_V1)})),
         repost              INTEGER NOT NULL DEFAULT 0 CHECK (repost IN (0, 1)),
         first_seen_at       TEXT NOT NULL,
         last_seen_at        TEXT NOT NULL,
@@ -157,7 +163,7 @@ MIGRATIONS: list[str] = [
         id          INTEGER PRIMARY KEY,
         job_id      INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
         from_status TEXT,
-        to_status   TEXT NOT NULL CHECK (to_status IN ({_in(STATUSES)})),
+        to_status   TEXT NOT NULL CHECK (to_status IN ({_in(_STATUSES_V1)})),
         note        TEXT,
         changed_at  TEXT NOT NULL
     );
@@ -515,7 +521,7 @@ MIGRATIONS: list[str] = [
         location_text       TEXT,
         description         TEXT,
         description_missing INTEGER NOT NULL DEFAULT 1 CHECK (description_missing IN (0, 1)),
-        status              TEXT NOT NULL DEFAULT 'new' CHECK (status IN ({_in(STATUSES)})),
+        status              TEXT NOT NULL DEFAULT 'new' CHECK (status IN ({_in(_STATUSES_V1)})),
         repost              INTEGER NOT NULL DEFAULT 0 CHECK (repost IN (0, 1)),
         first_seen_at       TEXT NOT NULL,
         last_seen_at        TEXT NOT NULL,
@@ -609,6 +615,72 @@ MIGRATIONS: list[str] = [
     CREATE INDEX idx_description_resolutions_job ON description_resolutions(job_id, day);
     CREATE INDEX idx_description_resolutions_posting ON description_resolutions(source_key, posting_id);
     """,
+    # 25: status 'accepted' after 'offer', interview rounds and notes (v0.98.0). `jobs` and `status_history` are rebuilt for the
+    # new CHECK, through _rebuild (REBUILDS) because DROP TABLE jobs would cascade. DROP TABLE also removes the `jobs` row of
+    # sqlite_sequence, so the counter is kept in m25_seq and put back (else ids of archived or merged jobs would be given out
+    # again, which migration 21 ended). The new tables use IF NOT EXISTS: a run of 25 on a database that already has them
+    # (version put back by hand) keeps the rows. A round has no number column: the number is the position by starts_at.
+    f"""
+    CREATE TEMP TABLE m25_seq AS SELECT COALESCE(MAX(seq), 0) AS seq FROM sqlite_sequence WHERE name = 'jobs';
+    CREATE TABLE jobs_new (
+        id                  INTEGER PRIMARY KEY AUTOINCREMENT,
+        dedup_key           TEXT NOT NULL UNIQUE,
+        canonical_url       TEXT,
+        title               TEXT NOT NULL,
+        company             TEXT NOT NULL,
+        location_text       TEXT,
+        description         TEXT,
+        description_missing INTEGER NOT NULL DEFAULT 1 CHECK (description_missing IN (0, 1)),
+        status              TEXT NOT NULL DEFAULT 'new' CHECK (status IN ({_in(_STATUSES_V25)})),
+        repost              INTEGER NOT NULL DEFAULT 0 CHECK (repost IN (0, 1)),
+        first_seen_at       TEXT NOT NULL,
+        last_seen_at        TEXT NOT NULL,
+        run_id              TEXT REFERENCES runs(id),
+        needs_rescore       INTEGER NOT NULL DEFAULT 0 CHECK (needs_rescore IN (0, 1)),
+        closed_at           TEXT,
+        posted_on           TEXT
+    );
+    INSERT INTO jobs_new ({_M21_COLS}) SELECT {_M21_COLS} FROM jobs;
+    DROP TABLE jobs;
+    ALTER TABLE jobs_new RENAME TO jobs;
+    CREATE INDEX idx_jobs_status ON jobs(status);
+    CREATE INDEX idx_jobs_canonical_url ON jobs(canonical_url);
+    INSERT INTO sqlite_sequence (name, seq) SELECT 'jobs', 0 WHERE NOT EXISTS (SELECT 1 FROM sqlite_sequence WHERE name = 'jobs');
+    UPDATE sqlite_sequence SET seq = MAX(seq, (SELECT seq FROM m25_seq)) WHERE name = 'jobs';
+    DROP TABLE m25_seq;
+    CREATE TABLE status_history_new (
+        id          INTEGER PRIMARY KEY,
+        job_id      INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+        from_status TEXT,
+        to_status   TEXT NOT NULL CHECK (to_status IN ({_in(_STATUSES_V25)})),
+        note        TEXT,
+        changed_at  TEXT NOT NULL
+    );
+    INSERT INTO status_history_new (id, job_id, from_status, to_status, note, changed_at)
+        SELECT id, job_id, from_status, to_status, note, changed_at FROM status_history;
+    DROP TABLE status_history;
+    ALTER TABLE status_history_new RENAME TO status_history;
+    CREATE INDEX idx_status_history_job ON status_history(job_id);
+    CREATE TABLE IF NOT EXISTS interviews (
+        id         INTEGER PRIMARY KEY,
+        job_id     INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+        starts_at  TEXT NOT NULL,
+        kind       TEXT NOT NULL CHECK (kind IN ('phone', 'video', 'onsite', 'other')),
+        place      TEXT CHECK (place IS NULL OR length(place) <= 300),
+        notes      TEXT CHECK (notes IS NULL OR length(notes) <= 2000),
+        created_at TEXT NOT NULL,
+        updated_at TEXT
+    );
+    CREATE INDEX IF NOT EXISTS idx_interviews_job ON interviews(job_id, starts_at);
+    CREATE TABLE IF NOT EXISTS job_notes (
+        id         INTEGER PRIMARY KEY,
+        job_id     INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+        status_at  TEXT NOT NULL,
+        text       TEXT NOT NULL CHECK (length(text) BETWEEN 1 AND 2000),
+        created_at TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_job_notes_job ON job_notes(job_id);
+    """,
 ]
 
 
@@ -636,7 +708,9 @@ def schema_version(conn: sqlite3.Connection) -> int:
 
 # Migrations that rebuild `jobs`, the parent of ON DELETE CASCADE keys. They run with foreign keys off: with them on,
 # DROP TABLE jobs deletes every child row, and foreign_key_check does not notice (checked on a copy, 11 Nov 2026).
-REBUILDS = frozenset({21})
+REBUILDS = frozenset({21, 25})
+# Not listed: `interviews` and `job_notes` (migration 25). The counts are taken before the script runs, when those tables may not exist yet; a later
+# rebuild of `jobs` must add them here (they hold rows by then) so that a lost row rolls the migration back.
 _KEPT = ("jobs", "job_sources", "job_locations", "job_travel_checks", "job_filter_results", "scores", "status_history", "documents")
 
 
@@ -718,7 +792,7 @@ def archive_job(
     """Move a working job into job_archive with its full record, then delete the working row.
 
     The archive keeps the job as it was at rejection (goal.md 5.3.3): fields, locations, sources,
-    filter results, and the latest score if there is one. Returns the archive row id.
+    filter results, the latest score if there is one, and since v0.98.0 the interview rounds, notes and status history. Returns the archive row id.
     """
     if stage not in ARCHIVE_STAGES:
         raise ValueError(f"unknown archive stage {stage!r}")
@@ -737,7 +811,11 @@ def archive_job(
             "SELECT * FROM job_travel_checks WHERE location_id = ? ORDER BY id", (loc["id"],))]
         places.append(entry)
     docs = [dict(r) for r in conn.execute("SELECT * FROM documents WHERE job_id = ? ORDER BY id", (job_id,))]
-    record = {"job": dict(job), "sources": sources, "filter_results": filters, "locations": places, "documents": docs}
+    interviews = [dict(r) for r in conn.execute("SELECT * FROM interviews WHERE job_id = ? ORDER BY id", (job_id,))]
+    notes = [dict(r) for r in conn.execute("SELECT * FROM job_notes WHERE job_id = ? ORDER BY id", (job_id,))]
+    history = [dict(r) for r in conn.execute("SELECT * FROM status_history WHERE job_id = ? ORDER BY id", (job_id,))]
+    record = {"job": dict(job), "sources": sources, "filter_results": filters, "locations": places, "documents": docs,
+              "interviews": interviews, "notes": notes, "status_history": history}      # rounds and notes come back on restore, the history stays here (v0.98.0)
     approved = [d for d in docs if d["status"] == "approved"]
     if approved:
         # The approved PDFs are never deleted or moved (decided by the user, 1 Nov 2026: they may already have gone to
@@ -768,14 +846,14 @@ def archive_job(
 
 # Statuses a restored job gets back (the status it had when it was archived, kept in the archive record). Later statuses
 # depend on scores, documents or an application that are not restored, so those jobs come back as `new`.
-RESTORED_STATUSES = frozenset({"applied", "interview", "offer"})
+RESTORED_STATUSES = frozenset({"applied", "interview", "offer", "accepted"})
 
 
 def restore_job(conn: sqlite3.Connection, archive_id: int) -> int:
     """Put an archived job back as a working job: with its status from before the rejection if that is one of
     RESTORED_STATUSES (an applied job stays applied), else `new` (no filter results, so the filters run again).
 
-    Everything stored at rejection is used: the job row, its sources and its locations. The archive row is kept as
+    Everything stored at rejection is used: the job row, its sources and its locations, and its interview rounds and notes (not its old status history). The archive row is kept as
     history and marked with the restore time and the new job id. Returns the new job id.
     """
     row = conn.execute("SELECT * FROM job_archive WHERE id = ?", (archive_id,)).fetchone()
@@ -807,6 +885,13 @@ def restore_job(conn: sqlite3.Connection, archive_id: int) -> int:
                          "VALUES (?, ?, ?, ?, ?, ?, ?)",
                          (new_id, loc["location_text"], loc.get("city"), loc.get("country"), loc.get("resolved", 0),
                           loc.get("latitude"), loc.get("longitude")))
+        for i in record.get("interviews", []):                 # keys of records written before v0.98.0 are missing: nothing to put back
+            conn.execute("INSERT INTO interviews (job_id, starts_at, kind, place, notes, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
+                         (new_id, i["starts_at"], i["kind"], i.get("place"), i.get("notes"), i["created_at"], i.get("updated_at")))
+        for n in record.get("notes", []):
+            conn.execute("INSERT INTO job_notes (job_id, status_at, text, created_at) VALUES (?, ?, ?, ?)",
+                         (new_id, n["status_at"], n["text"], n["created_at"]))
+        # The old status_history rows stay in the record only: replayed next to this row they would break undo (it reads the last row).
         conn.execute("INSERT INTO status_history (job_id, from_status, to_status, note, changed_at) VALUES (?, NULL, ?, ?, ?)",
                      (new_id, status, f"restored from archive entry {archive_id} ({row['reason_code']})", now))
         conn.execute("UPDATE job_archive SET restored_at = ?, restored_job_id = ? WHERE id = ?", (now, new_id, archive_id))

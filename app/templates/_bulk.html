@@ -1,0 +1,60 @@
+{# The selection without JavaScript (v0.96.0): a GET form `bulk` (outside the tables, the rows hold forms of their own), a checkbox per job that
+   joins it through form="bulk", and a bar of submit buttons, one per action of the page. A press opens the confirmation page of /bulk-status.
+   Since v0.97.0 the 8 list pages also load select.js, which reads everything it needs from this markup: the button texts (`data-label-<action>`),
+   the swipe actions (`data-swipe-lead`, `data-swipe-trail`, statusflow.SWIPE) and, in the sheet, one token per action (`data-csrf-<action>`). #}
+{# The optional first interview round (v0.99.0): date, time and kind, given for one job only; both date and time or neither. Undoing the status later keeps the round. #}
+{% macro round_fields(disabled) %}
+<fieldset class="sheet-round-fields">
+  <legend>First interview round (optional)</legend>
+  <input type="date" name="day" aria-label="Date"{% if disabled %} disabled{% endif %}>
+  <input type="time" name="clock" aria-label="Time"{% if disabled %} disabled{% endif %}>
+  <select name="kind" aria-label="Kind"{% if disabled %} disabled{% endif %}>{% for k in round_kinds %}<option value="{{ k }}">{{ k }}</option>{% endfor %}</select>
+  <p class="meta">Give the date and the time together, for one job. Setting the status back later keeps the round.</p>
+</fieldset>
+{% endmacro %}
+{% macro form(page, page_no=1) %}{% if not demo %}
+<form id="bulk" method="get" action="/bulk-status" data-swipe-lead="{{ swipe[page][0]|join(' ') }}" data-swipe-trail="{{ swipe[page][1]|join(' ') }}" data-careful="{{ careful|join(' ') }}"{% for a in page_actions[page] %} data-label-{{ a }}="{{ action_label(a, page) }}"{% endfor %}>
+  <input type="hidden" name="next" value="{{ page }}">
+  <input type="hidden" name="page" value="{{ page_no }}">
+</form>
+<button type="button" class="selecttoggle" hidden aria-pressed="false">Select</button>
+{% endif %}
+{% endmacro %}
+{% macro select_all() %}{% if not demo %}<input type="checkbox" class="selectall" hidden aria-label="Select all jobs on this page">
+{% endif %}{% endmacro %}
+{% macro box(id, title) %}{% if not demo %}<input type="checkbox" class="pick" name="id" value="{{ id }}" form="bulk" aria-label="Select job {{ id }}: {{ title }}">
+{% endif %}{% endmacro %}
+{% macro bar(page) %}{% if not demo %}
+<div class="selbar" role="toolbar" aria-label="Selected jobs">
+  <span class="selhint">Tick jobs, then choose:</span>
+  {% for a in page_actions[page] %}<button type="submit" form="bulk" name="action" value="{{ a }}"{% if a == "reject" %} class="reject"{% endif %}>{{ action_label(a, page) }}{% if a == "reject" %} selected…{% endif %}</button>
+  {% endfor %}
+</div>
+{% endif %}
+{% endmacro %}
+{# The confirmation sheet (v0.97.0): a closed <dialog> that select.js fills and opens; it posts to /bulk-status like the confirmation page, so nothing changes before Confirm. #}
+{% macro sheet(page, page_no=1) %}{% if not demo %}
+<dialog class="sheet" id="sheet" aria-labelledby="sheet-title">
+  <form method="post" action="/bulk-status" id="sheetform" data-comment-for="reject"{% for a in page_actions[page] %} data-csrf-{{ a }}="{{ csrf('bulk:' ~ a) }}"{% endfor %}>
+    <input type="hidden" name="csrf" value="">
+    <input type="hidden" name="action" value="">
+    <input type="hidden" name="ids" value="">
+    <input type="hidden" name="next" value="{{ page }}">
+    <input type="hidden" name="page" value="{{ page_no }}">
+    <p class="sheet-title" id="sheet-title"></p>
+    <p class="sheet-warn" data-warn-for="reject" hidden>At least one of these jobs is marked as applied. Rejecting it archives the application: it leaves the Applied page and no longer counts
+      in the Analytics response rate; restore-job brings it back as applied (the date of the application is then the restore date).</p>
+    <ul class="sheet-list"></ul>
+    <p class="sheet-note"></p>
+    {% if "interview" in page_actions[page] %}<div class="sheet-round" data-round-for="interview" hidden>{{ round_fields(true) }}</div>
+    {% endif %}
+    <div class="sheet-comment" hidden><label for="sheet-comment">Comment (optional, kept for all these jobs)</label>
+      <textarea id="sheet-comment" name="comment" rows="2" maxlength="{{ comment_max }}" autocomplete="off" disabled></textarea></div>
+    <div class="sheet-buttons">
+      <button type="submit" name="confirm" value="yes" class="sheet-confirm">Confirm</button>
+      <button type="button" class="sheet-cancel">Cancel</button>
+    </div>
+  </form>
+</dialog>
+{% endif %}
+{% endmacro %}

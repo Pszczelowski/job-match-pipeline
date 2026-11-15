@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Delete {{ kind }}, job {{ j.id }} - Recruitment{% endblock %}
+{% block content %}
+<p><a href="/jobs/{{ j.id }}">&larr; Back to the job</a></p>
+<h1>Delete this {{ kind }}?</h1>
+{% if kind == "round" %}
+<p>Interview round {{ item.number }}: {{ item.date }} {{ item.time }}, {{ item.kind }}{% if item.place %}, {{ item.place }}{% endif %}.</p>
+{% if item.notes %}<p class="meta">{{ item.notes }}</p>{% endif %}
+{% else %}
+<p>Note added {{ item.created_at }} (status then {{ item.status_at }}):</p>
+<p class="meta">{{ item.text[:200] }}{% if item.text|length > 200 %}&hellip;{% endif %}</p>
+{% endif %}
+<p>This removes it from this app and cannot be undone. Nothing is sent to anyone.</p>
+<form method="post" action="{{ action }}" class="confirm">
+  <input type="hidden" name="csrf" value="{{ csrf(purpose) }}">
+  <p><button type="submit" name="confirm" value="yes" class="reject">Yes, delete this {{ kind }}</button>
+    <a class="button" href="/jobs/{{ j.id }}">Cancel</a></p>
+</form>
+{% endblock %}

@@ -240,8 +240,8 @@ def test_the_bookmarklet_sends_nothing(site):
     assert "clipboard" in bm and "innerText" in bm
     assert "Copy failed" in bm                                                    # "Copied" is said only after a successful copy
     assert seen(r).count(bm) >= 2                                                 # shown as a link and as text to copy
-    assert "script-src 'none'" in r.headers["content-security-policy"] and "script-src 'self'" not in r.headers["content-security-policy"] and "unsafe-inline" not in r.headers["content-security-policy"] and "unsafe-eval" not in r.headers["content-security-policy"]
-    assert "<script" not in r.text.lower()
+    assert "script-src 'self'" in r.headers["content-security-policy"] and "script-src 'none'" not in r.headers["content-security-policy"] and "unsafe-inline" not in r.headers["content-security-policy"] and "unsafe-eval" not in r.headers["content-security-policy"]
+    assert "<script" not in r.text.replace('<script src="/static/select.js" defer></script>', "").lower()
 
 
 def test_get_missing_and_the_paste_page_write_nothing(site, dbfile):

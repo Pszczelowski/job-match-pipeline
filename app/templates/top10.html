@@ -1,5 +1,6 @@
 {% extends "base.html" %}
 {% from "_actions.html" import buttons %}
+{% from "_bulk.html" import form, box, bar, sheet %}
 {% block title %}Today's Top 10 - Recruitment{% endblock %}
 {% block content %}
 <h1>Today's Top {{ top_n }}</h1>
@@ -12,9 +13,10 @@
 {% if not rep.jobs %}
 <p class="empty">No job matches in this batch.{% if rep.waiting %} {{ rep.waiting }} job(s) are still waiting for a score.{% endif %}</p>
 {% endif %}
+{% if rep.jobs %}{{ form("top") }}{% endif %}
 {% for j in rep.jobs %}
-<article class="card band-{{ j.band }}">
-  <div class="rank">#{{ j.rank }} &middot; <span class="score">{{ j.score }}</span> &middot; <span class="band">{{ j.band|upper }}</span></div>
+<article class="card band-{{ j.band }}" data-actions="{{ bulk.get(j.job_id, "") }}" data-title="{{ j.title }}" data-company="{{ j.company }}">
+  <div class="rank">{{ box(j.job_id, j.title) }} #{{ j.rank }} &middot; <span class="score">{{ j.score }}</span> &middot; <span class="band">{{ j.band|upper }}</span></div>
   <h2><a href="/jobs/{{ j.job_id }}">{{ j.title }}</a></h2>
   <div class="where">{{ j.company }}{% if j.locations %} &middot; {{ j.locations|join(", ") }}{% endif %}</div>
   {% if j.posted %}<div class="meta">{{ j.posted }}</div>{% endif %}
@@ -30,6 +32,8 @@
   {{ buttons(j.job_id, actions.get(j.job_id, ()), "top", undo.get(j.job_id)) }}
 </article>
 {% endfor %}
+{% if rep.jobs %}{{ bar("top") }}
+{{ sheet("top") }}{% endif %}
 {% if rep.missing %}
 <div class="card band-medium">
   <h2>Waiting for a description ({{ rep.missing|length }})</h2>
