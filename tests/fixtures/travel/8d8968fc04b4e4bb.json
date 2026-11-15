@@ -1,0 +1,124 @@
+{
+ "stations": [
+  {
+   "id": "8599999",
+   "name": "Exampletown",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.50000,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8503702",
+   "name": "Exampletown, Bahnhof",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.50000,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8573257",
+   "name": "Exampletown, Sonnenhof",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.50000,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8580583",
+   "name": "Exampletown, Gewerbehaus",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.518615,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8582739",
+   "name": "Exampletown, Cholplatz",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.509903,
+    "y": 8.544541
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8503772",
+   "name": "Exampletown, Mettmenriet",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.512476,
+    "y": 8.543463
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8503850",
+   "name": "Exampletown, Untertor",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.515861,
+    "y": 8.541873
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8580617",
+   "name": "Exampletown, Kaffeestrasse",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.511772,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8582005",
+   "name": "Exampletown, Einkaufszentrum Süd",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.509472,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8580635",
+   "name": "Exampletown, Berglistrasse",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.50000,
+    "y": 8.546033
+   },
+   "distance": null,
+   "icon": "bus"
+  }
+ ]
+}

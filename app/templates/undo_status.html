@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Undo status, job {{ j.id }} - Recruitment{% endblock %}
+{% block content %}
+<p><a href="/jobs/{{ j.id }}">&larr; Back to the job</a></p>
+<h1>Set this job back?</h1>
+<p><strong>{{ j.title }}</strong><br><span class="where">{{ j.company }} &middot; job {{ j.id }} &middot; status {{ j.status }}</span></p>
+{% if why_not %}
+<p class="notice refused">{{ why_not }}</p>
+{% else %}
+<p>Job {{ j.id }} is <code>{{ j.status }}</code> now. This sets it back to <code>{{ target }}</code>, the status it had before.
+  It only changes the status in this app and is written to the status history with the note <code>web undo</code>.
+  Nothing is sent to or taken back from an employer. You can go back one step only.</p>
+<form method="post" action="/jobs/{{ j.id }}/undo-status" class="confirm">
+  <input type="hidden" name="csrf" value="{{ csrf('undo-status:' ~ j.id) }}">
+  <input type="hidden" name="next" value="{{ nxt }}">
+  <p><button type="submit" name="confirm" value="yes" class="reject">Yes, set it back to {{ target }}</button>
+    <a class="button" href="/jobs/{{ j.id }}">Cancel</a></p>
+</form>
+{% endif %}
+{% endblock %}

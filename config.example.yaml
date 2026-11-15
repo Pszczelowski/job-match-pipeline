@@ -1,0 +1,618 @@
+# Copy to config.yaml (untracked) and fill in. Every value below is a default from goal.md.
+# The home street address lives only in config.yaml, never in a tracked file (CLAUDE.md).
+
+timezone: Europe/Zurich
+
+paths:
+  database: data/jobs.db        # SQLite file (WAL mode)
+  exchange: exchange            # batches/, results/, imported/, rejected/ (goal.md 5.10)
+  logs: logs                    # rotating log file (no secrets, no job text)
+  lock: data/run.lock           # prevents overlapping runs
+  documents: output/documents   # generated cover-letter and CV PDFs, one folder per job (goal.md 5.6); never committed
+  approved: output/approved     # copies of the approved PDFs, one folder per job, same file names (goal.md 5.6, `approve-document`); never committed
+
+backup:                         # goal.md 5.9: `python -m app backup`
+  dir: backups                  # where the copies go (relative to the repository root, like paths.database); later a NAS share
+  keep: 14                      # newest copies kept by rotation, 1 to 365 (jobs_pre-restore_* copies are never rotated)
+
+location:                       # goal.md 5.3.1
+  limit_minutes: 60             # on-site (and unknown work mode): train or car, at most this
+  hybrid_limit_minutes: 120     # hybrid offer (a LinkedIn "Remote" label on a Swiss job counts as hybrid): train or car, at most this (decided 14 Nov 2026)
+  train_origin: "Zürich HB"
+  car_origin_address: ""        # street address in Exampletown; fill in config.yaml only
+  car_origin_town: "Exampletown"
+  arrival_time: "08:30"         # weekday morning arrival for train and car
+  car_traffic_factor: 1.25      # free-flow time multiplied by this (to calibrate)
+  train_car_factor: 1.25        # train estimate = free-flow car time x this, ONLY when the timetable gives no answer (goal.md 5.3.1)
+  approximate_near_limit_minutes: 10   # approximate result within this of the limit is a conditional pass
+  approximation:                # last fallback only
+    detour_factor: 1.3
+    average_speed_kmh: 60
+  cache_expiry_days: 90
+  providers:                    # goal.md 5.3.1; free public services, cached, used slowly
+    transport_url: "https://transport.opendata.ch/v1"     # train; source: opentransportdata.swiss
+    osrm_url: "https://router.project-osrm.org"           # car; OpenStreetMap data, OSRM
+    user_agent: "Recruitment-pipeline/0.75 (personal job-search tool)"
+    request_delay_seconds: 1.5  # pause between requests to the same service (OSRM asks for at most 1 per second)
+    timeout_seconds: 15
+  place_aliases:                # English or alternative spellings looked up under the name the timetable knows (key: query in lower case)
+    berne: "Bern"
+    lucerne: "Luzern"
+    geneva: "Genève"
+    genf: "Genève"
+    basle: "Basel"
+    bâle: "Basel"
+    neuchatel: "Neuchâtel"
+  geneva_canton_places:         # a place in the canton of Geneva (Genève and its 44 other communes) fails with `location_geneva_canton`, no travel time (decided 14 Nov 2026)
+    - 'Genève'
+    - 'Aire-la-Ville'
+    - 'Anières'
+    - 'Avully'
+    - 'Avusy'
+    - 'Bardonnex'
+    - 'Bellevue'
+    - 'Bernex'
+    - 'Carouge'
+    - 'Cartigny'
+    - 'Céligny'
+    - 'Chancy'
+    - 'Chêne-Bougeries'
+    - 'Chêne-Bourg'
+    - 'Choulex'
+    - 'Collex-Bossy'
+    - 'Collonge-Bellerive'
+    - 'Cologny'
+    - 'Confignon'
+    - 'Corsier'
+    - 'Dardagny'
+    - 'Genthod'
+    - 'Le Grand-Saconnex'
+    - 'Gy'
+    - 'Hermance'
+    - 'Jussy'
+    - 'Laconnex'
+    - 'Lancy'
+    - 'Meinier'
+    - 'Meyrin'
+    - 'Onex'
+    - 'Perly-Certoux'
+    - 'Plan-les-Ouates'
+    - 'Pregny-Chambésy'
+    - 'Presinge'
+    - 'Puplinge'
+    - 'Russin'
+    - 'Satigny'
+    - 'Soral'
+    - 'Thônex'
+    - 'Troinex'
+    - 'Vandoeuvres'
+    - 'Vernier'
+    - 'Versoix'
+    - 'Veyrier'
+  remote_patterns:              # a fully remote offer passes without a location check (reason code `remote`)
+    - 'fully remote'
+    - '100 ?% remote'
+    - 'remote[- ]first'
+    - 'work from anywhere'
+    - 'vollst[aä]ndig remote'
+  countries:                    # "Country - Place" locations are reduced to the place; a bare country is "unspecified"
+    - 'Switzerland'
+    - 'Schweiz'
+    - 'Suisse'
+    - 'Germany'
+    - 'Austria'
+    - 'France'
+    - 'Italy'
+    - 'United Kingdom'
+    - 'UK'
+    - 'Netherlands'
+    - 'Denmark'
+    - 'Sweden'
+    - 'Luxembourg'
+    - 'Poland'
+    - 'Spain'
+    - 'Ireland'
+    - 'Belgium'
+    - 'Liechtenstein'
+  poland:                       # goal.md 5.3.1, decided 2 Nov 2026: a job located only in Poland is decided by its work mode
+    enabled: true               # remote or hybrid passes (poland_remote, poland_hybrid), on-site fails (poland_on_site),
+                                # work mode not stated is a conditional pass (poland_work_mode_unknown); no travel time is used
+    country_names:              # a location naming one of these is Polish (case and diacritics are ignored)
+      - 'Poland'
+      - 'Polska'
+      - 'Polen'
+      - 'Pologne'
+      - 'Polonia'
+    cities:                     # a location naming one of these is Polish (also "<City>, <Region>, Poland"); diacritics are ignored
+      - 'Warsaw'
+      - 'Warszawa'
+      - 'Kraków'
+      - 'Cracow'
+      - 'Wrocław'
+      - 'Gdańsk'
+      - 'Gdynia'
+      - 'Sopot'
+      - 'Poznań'
+      - 'Łódź'
+      - 'Szczecin'
+      - 'Katowice'
+      - 'Lublin'
+      - 'Bydgoszcz'
+      - 'Białystok'
+      - 'Rzeszów'
+      - 'Toruń'
+      - 'Gliwice'
+      - 'Opole'
+      - 'Kielce'
+      - 'Olsztyn'
+    # Office presence (decided 14 Nov 2026), read from the title, the place and the description for a hybrid or on-site job in Poland:
+    # a low presence passes (poland_hybrid), a high one fails (poland_too_much_office); with neither, hybrid is conditional
+    # (poland_hybrid_presence_unknown) and on-site fails (poland_on_site). A low pattern wins when both match.
+    low_presence_patterns:
+      - 'once a month'
+      - 'once per month'
+      - '(?:one|1) weeks? (?:per|a|each|every|in a) month'
+      - '\b(?:one|1) days? (?:a|per|each|every) week\b(?![^.\n]{0,25}\b(?:remote|home|zdaln))'
+      - 'raz w miesi[ąa]cu'
+      - 'tydzie[nń] w miesi[ąa]cu'
+      - 'occasional(?:ly)? (?:office )?visits?'
+    high_presence_patterns:
+      - '\b(?:[2-5]|two|three|four|five)(?:\s*(?:-|–|to)\s*(?:[2-5]|two|three|four|five))?\s+days?\s+(?:a|per|each|every)\s+week\s+(?:in|at|from)\s+(?:the\s+|our\s+)?office'
+      - '(?:in|at) the office\s+(?:for\s+)?(?:[2-5]|two|three|four|five)(?:\s*(?:-|–|to)\s*(?:[2-5]|two|three|four|five))?\s+days?\s+(?:a|per|each|every)\s+week'
+      - '\b[2-5](?:\s*[-–]\s*[2-5])?\s+dni\s+w\s+tygodniu\s+w\s+biurze'
+      - 'w biurze\s+[2-5](?:\s*[-–]\s*[2-5])?\s+dni\s+w\s+tygodniu'
+    # Work mode: LinkedIn's own label (Remote / Hybrid / On-site) first, then these regular expressions (case-insensitive)
+    # on the title and the place, then on the description. Inside one text hybrid is tried first, then remote, then on-site.
+    # A match right after "no", "not", "without", "bez", "nie", "kein" or before "not possible" is ignored.
+    remote_patterns:
+      - '\bremote\b'
+      - 'zdaln'
+      - 'work(?:ing)? from home'
+      - '\bwfh\b'
+      - 'home[- ]?office'
+    hybrid_patterns:
+      - '\bhybrid\b(?!\s+(?:cloud|infrastructure|environments?|architectures?|solutions?|systems?|apps?|applications?))'
+      - '\bhybrydow\w*\b(?!\s+chmur)'
+      - '\b\d\s*(?:days?|dni|dzie[nń])\b[^.\n]{0,30}\b(?:in the office|at the office|from the office|w biurze|remote|zdaln)'
+    onsite_patterns:
+      - '\bon[- ]?site\b'
+      - 'stacjonarn'
+      - '\bin[- ]office\b'
+      - 'office[- ]based'
+      - 'praca w biurze'
+
+filters:                       # goal.md 5.3
+  title_include: []             # empty: no role pre-filter (decided 31 Oct 2026)
+  title_exclude: []
+  excluded_companies: []
+  seniority_reject_ubs_titles:  # UBS "Corporate title" values
+    - "VP - Vice President"
+    - "D - Director"
+    - "DI - Director"           # the code seen in the real alert of 24 Oct 2026
+    - "ED - Executive Director"
+    - "MD - Managing Director"
+  seniority_reject_title_patterns:
+    - 'Vice President'
+    - 'Director'
+    - 'Managing Director'
+    - 'Head of'
+    - 'Chief'
+  seniority_allow_title_patterns:   # matched first, so these are not rejected
+    - 'Assistant Vice President'
+    - 'Associate Director'
+
+# Language rule, goal.md 5.3.2. Polish and English are never a problem and are not listed.
+# All entries are regular expressions, matched as whole words, case-insensitive.
+# Changing a phrase so that a reject becomes a pass needs the user's approval (goal.md 5.3.2).
+languages:
+  names:                        # one entry per language the rule watches
+    - {language: German,     patterns: ['german', 'deutsch\w*', 'allemand', 'tedesco']}
+    - {language: French,     patterns: ['french', 'franz[oö]sisch\w*', 'franz[oö]sich\w*', 'fran[cç]ais', 'französ\w*']}
+    - {language: Italian,    patterns: ['italian', 'italienisch\w*', 'italiano', 'italien']}
+    - {language: Dutch,      patterns: ['dutch', 'niederl[aä]ndisch\w*', 'nederlands']}
+    - {language: Spanish,    patterns: ['spanish', 'spanisch\w*', 'espa[nñ]ol']}
+    - {language: Portuguese, patterns: ['portuguese', 'portugiesisch\w*']}
+    - {language: Russian,    patterns: ['russian', 'russisch\w*']}
+    - {language: Chinese,    patterns: ['chinese', 'mandarin', 'chinesisch\w*']}
+    - {language: Turkish,    patterns: ['turkish', 't[uü]rkisch\w*', 't[uü]rk[cç]e']}
+    - {language: Arabic,     patterns: ['arabic', 'arabisch\w*']}
+    - {language: Greek,      patterns: ['greek', 'griechisch\w*']}
+    - {language: Hebrew,     patterns: ['hebrew', 'hebr[aä]isch\w*']}
+    - {language: Japanese,   patterns: ['japanese', 'japanisch\w*']}
+    - {language: Korean,     patterns: ['korean', 'koreanisch\w*']}
+    - {language: Hindi,      patterns: ['hindi']}
+    - {language: Swedish,    patterns: ['swedish', 'schwedisch\w*']}
+    - {language: Danish,     patterns: ['danish', 'd[aä]nisch\w*']}
+    - {language: Norwegian,  patterns: ['norwegian', 'norwegisch\w*']}
+    - {language: Finnish,    patterns: ['finnish', 'finnisch\w*']}
+    - {language: Czech,      patterns: ['czech', 'tschechisch\w*']}
+    - {language: Slovak,     patterns: ['slovak', 'slowakisch\w*']}
+    - {language: Hungarian,  patterns: ['hungarian', 'ungarisch\w*']}
+    - {language: Romanian,   patterns: ['romanian', 'rum[aä]nisch\w*']}
+    - {language: Bulgarian,  patterns: ['bulgarian', 'bulgarisch\w*']}
+    - {language: Ukrainian,  patterns: ['ukrainian', 'ukrainisch\w*']}
+    - {language: Serbian,    patterns: ['serbian', 'serbisch\w*']}
+    - {language: Croatian,   patterns: ['croatian', 'kroatisch\w*']}
+    - {language: Slovenian,  patterns: ['slovenian', 'slowenisch\w*']}
+    - {language: Persian,    patterns: ['persian', 'farsi', 'persisch\w*']}
+  descriptive_nouns:            # "the Spanish market", "German clients": the word names a place or people, not a skill
+    - 'markets?'
+    - 'clients?'
+    - 'customers?'
+    - 'desks?'
+    - 'teams?'
+    - 'banks?'
+    - 'branch(?:es)?'
+    - 'regions?'
+    - 'business(?:es)?'
+    - 'entit(?:y|ies)'
+    - 'subsidiar(?:y|ies)'
+  ignored_languages:            # never a problem; they only anchor words such as "fluent" in "fluent English"
+    - 'english'
+    - 'englisch\w*'
+    - 'anglais'
+    - 'polish'
+    - 'polnisch\w*'
+    - 'polonais'
+  requirement_cues:           # a language mention only counts as a requirement near one of these (or a CEFR level)
+    - 'fluen\w*'
+    - 'proficien\w*'
+    - 'knowledge'
+    - 'skills?'
+    - 'speak\w*'
+    - 'spoken'
+    - 'written'
+    - 'writing'
+    - 'required?'
+    - 'requirements?'
+    - 'must'
+    - 'good'
+    - 'excellent'
+    - 'strong'
+    - 'sehr gut\w*'          # "sehr gute Deutschkenntnisse": a requirement, level not stated (stays conditional)
+    - 'gut(?:e|en|er|es)?'
+    - 'hervorragend\w*'
+    - 'ausgezeichnet\w*'
+    - 'command'
+    - 'languages?'
+    - 'level'
+    - 'native'
+    - 'mother tongue'
+    - 'communicat\w*'
+    - 'bilingual'
+    - 'fliessend'
+    - 'fließend'
+    - '\w*kenntnisse'
+    - 'sprachniveau'
+    - 'sprechen'
+    - 'erforderlich'
+    - 'verhandlungssicher'
+    - 'niveau'
+    - 'courant'
+    - 'maîtrise'
+  c1_phrases:                   # read as C1 (goal.md 5.3.2: fluent, business fluent, verhandlungssicher)
+    - 'fluen(?:t|tly|cy)'      # fluent, fluently, fluency (the last two are an addition to goal.md's word list)
+    - 'business fluent'
+    - 'verhandlungssicher\w*'
+    - 'fliessend\w*'
+    - 'fließend\w*'
+    - 'courant'
+    - 'native'
+    - 'mother tongue'
+    - 'muttersprach\w*'                  # Muttersprache, Muttersprachniveau, muttersprachlich
+    - 'full professional proficiency'     # the usual wording for C1 or above (added 31 Oct 2026 after a real posting)
+  optional_phrases:             # the language is only a plus
+    - 'is a plus'
+    - 'a plus'
+    - 'nice to have'
+    - 'advantage'
+    - 'an asset'
+    - 'preferred'
+    - 'desirable'
+    - 'von vorteil'
+    - 'wünschenswert'
+    - 'ein plus'
+    - 'advantageous'              # added 31 Oct 2026 after a real posting: "highly advantageous but not mandatory"
+    - 'beneficial'
+    - 'helpful'
+    - 'welcome'
+    - 'appreciated'
+    - 'not mandatory'
+    - 'not required'
+    - 'not essential'
+    - 'not necessary'
+  german_posting:               # a posting written in German with no stated requirement (language_implied_by_posting)
+    min_german_words: 8
+    min_ratio: 1.5              # German function words per English one
+
+scoring:                       # goal.md 5.5
+  band_low_below: 50
+  band_high_from: 70
+  batch_cap: null               # no cap (decided 31 Oct 2026)
+  top_n: 10
+  prompt_file: "prompts/scoring_prompt.md"   # versioned scoring prompt and rubric (goal.md 5.4)
+  weights:                      # overall = weighted average of the sub-scores; must add up to 100 and match the prompt
+    skills: 35
+    experience: 25
+    domain: 20
+    seniority: 10
+    location: 10
+  overall_tolerance: 3          # the importer warns when a file's overall differs from the formula by more than this
+  no_description_cap: 60        # overall is at most this for a job without a description (decided 31 Oct 2026)
+  non_english_cap: 49           # overall is at most this when the posting is not written in English (49 = low band since 14 Nov 2026); must be below band_high_from, so such a job is never HIGH
+                                # (decided by the user on 1 Nov 2026: the role then asks for fluent or mother-tongue German, an unacceptable gap; 49 is below tailoring.min_score: no documents since 14 Nov 2026)
+  calibration_min_agreement: 70 # calibration-report: at least this % of your labels must fall in the model's band, else review the rubric
+
+tailoring:                      # goal.md 5.6, 5.10
+  documents_top_n: 10           # tailored CV and cover letter for at most this many of the top jobs of a batch; 0 switches them off;
+                                # a value above scoring.top_n changes nothing (only the top_n selected jobs have a rank)
+  min_score: 60                 # ... and only for jobs whose overall score is at least this (decided 1 Nov 2026; 70 would be the HIGH band)
+  require_description: true     # no documents for a job without a description (scored from the title only, e.g. a LinkedIn mail; decided 1 Nov 2026);
+                                # add the description with `missing` / `set-description`, or set false to allow documents for such a job
+  photo: profile/photo.jpg      # photo on the CV (relative to the repository root); a missing file gives a CV without photo and a warning
+  letter_max_pages: 1           # a longer letter or CV keeps its PDF and gets a warning in its findings, it is not blocked
+  cv_max_pages: 2
+
+email:                          # goal.md 5.7; password comes from .env
+  sender: "alex.morgan@example.com"
+  recipient: "alex.morgan@example.com"
+  smtp_host: "smtp.gmail.com"
+  smtp_port: 587
+  send_attempts: 3              # tries per report before it is marked failed
+  retry_wait_seconds: 30
+
+report:                         # goal.md 5.7
+  subject_prefix: "Recruitment"
+  web_base_url: ""              # base URL of the web app (Phase 4); empty: the report has no web link
+  max_matches: 3                # matching points shown per job
+  max_gaps: 3                   # gaps shown per job
+
+gmail:                         # goal.md 5.1
+  imap_host: "imap.gmail.com"
+  # Each alert source has a Gmail label (the folder name over IMAP) and the one sender whose mails count in it.
+  # Mails of a source are recorded under their own source key, so each has its own zero-job rule and alert.
+  label_ubs: "JobSearch/JobSearch/Alerts/UBS"   # verified 31 Oct 2026 with `check-mail`
+  ubs_sender: "agentserver@ent.brassring.com"   # only mails from this sender count
+  label_linkedin: "JobSearch/JobSearch/Alerts/LinkedIn"   # verified 31 Oct 2026 with `check-mail`; read since v0.38.0
+  linkedin_sender: "jobalerts-noreply@linkedin.com"   # From of the one real alert seen (1 Nov 2026); mail from any other sender is an error
+  label_julius: "JobSearch/Alerts/Julius"   # Julius Baer job alert (Workday HR Connect); NOT under JobSearch/JobSearch/; check with `check-mail`
+  julius_sender: "noreply.hrconnect@juliusbaer.com"   # From of the one real alert seen (1 Nov 2026); mail from any other sender is an error
+  label_jobsch: "JobSearch/JobSearch/Alerts/JobsCh"   # jobs.ch job alert (v0.84.0); the label name is the default, check with `check-mail`
+  jobsch_sender: "jobmail@jobs.ch"   # From of the one real alert seen (12 Nov 2026); mail from any other sender is an error
+  lookback_days: 14             # how far back each run looks in the label
+  mark_seen: true               # mark processed mails as read (never deleted)
+  max_message_bytes: 5000000    # larger mails are skipped and recorded as errors
+
+descriptions:                   # goal.md 5.1
+  # Fetching UBS job pages needs UBS's written permission (Terms of use of ubs.com). It is OFF until you switch it on
+  # in config.yaml AND write down the basis in permission_note (what permission, since when, where it is kept).
+  fetch_enabled: false
+  permission_note: ""
+  delay_seconds: 5              # pause between two page requests
+  daily_cap: 60                 # at most this many pages per day
+  timeout_seconds: 30
+  user_agent: "Recruitment-pipeline/0.75 (personal job-search tool)"
+
+adapters:                       # goal.md 5.1, Phase 2: employer career sites. Every adapter is OFF until you switch it on here.
+  delay_seconds: 5              # pause between two requests to a site
+  daily_cap: 80                 # at most this many job pages per site and day
+  max_list_pages: 10            # list pages read per site and run
+  closed_after_missing: 2       # a job is marked closed when it was missing in this many complete list reads in a row
+  timeout_seconds: 30
+  user_agent: "Recruitment-pipeline/0.75 (personal job-search tool)"
+  six:                          # SIX Group, jobs.six-group.com (SAP SuccessFactors)
+    enabled: false
+    permission_note: ""         # optional: the basis you rely on (terms of use read on ..., permission, ...)
+    list_url: "https://jobs.six-group.com/search/?q&locationsearch&locale=en_US"
+    country_codes: ["CH"]       # keep jobs whose location ends in one of these codes ("Zurich, CH"); [] keeps all
+  lgt:                          # LGT, www.lgt.com (own site; the list covers all LGT locations)
+    enabled: false
+    permission_note: ""         # optional: the basis you rely on (terms of use clause 10 read on ..., ...)
+    list_url: "https://www.lgt.com/ch-en/career/jobs/48662!jobSearch"
+    places: ["Zurich", "Zürich", "Bern", "Lugano", "Geneva", "Genève", "Basel", "Vaduz", "Bendern", "Schaan"]   # keep jobs in these places; [] keeps all
+  sygnum:                       # Sygnum Bank, Salesforce Sites portal. Sygnum confirmed to the user that reading is OK.
+    enabled: false
+    permission_note: ""         # REQUIRED to switch on: who at Sygnum confirmed what, when, and where it is kept
+    list_url: "https://sygnumpeopleportal.my.salesforce-sites.com/recruit/fRecruit__ApplyJobList"
+    countries: ["Switzerland", "Liechtenstein"]    # keep vacancies in these countries; [] keeps all
+  julius:                       # Julius Baer, Workday career site (reads the site's JSON interface, as the career page itself does)
+    enabled: false              # the user decided on 2 Nov 2026 to switch it on despite an open point in the Julius Baer terms of use (goal.md 5.1)
+    permission_note: ""         # not required for this adapter
+    decision_note: ""           # optional: your decision and the risk you accepted, e.g. "2 Nov 2026: I switch it on knowing that the terms of use may forbid it"
+    list_url: "https://juliusbaer.wd3.myworkdayjobs.com/wday/cxs/juliusbaer/External/jobs"    # the POST address of the job list
+    country_facet: "187134fccb084a0ea9b4b95f23890dbe"    # Workday's id of "Switzerland" (the list filter of the career page); "" reads every country
+  # --- public-ATS readers (v0.70.0, goal.md 5.1): Workday tenants, SuccessFactors sites (tier T2), Greenhouse boards ---
+  swisscom:                     # Swisscom, Workday (tier T1, public JSON interface of the career site)
+    enabled: true               # the user decided on 4 Nov 2026 to switch it on: the purpose is finding job descriptions
+    permission_note: "T1: public Workday CXS JSON interface that the career site itself calls; robots.txt of swisscom.wd103.myworkdayjobs.com allows /SwisscomExternalCareers/, disallows only /refreshFacet/ (checked 4 Nov 2026)"
+    decision_note: ""
+    list_url: "https://swisscom.wd103.myworkdayjobs.com/wday/cxs/swisscom/SwisscomExternalCareers/jobs"    # the POST address of the job list
+    facets: {}                  # Workday facets (a country id), e.g. {"Location": ["<id>"]}; {} reads all and keeps by countries/places
+    countries: []             # all postings of Swisscom are Swiss (checked 4 Nov 2026); both lists empty keep all
+    places: []
+  vontobel:                     # Vontobel, Workday (tier T1)
+    enabled: true               # the user decided on 4 Nov 2026 to switch it on: the purpose is finding job descriptions
+    permission_note: "T1: public Workday CXS JSON interface that the career site itself calls; robots.txt of vontobel.wd3.myworkdayjobs.com allows /Vontobel_External_Career/, disallows only /refreshFacet/ (checked 4 Nov 2026)"
+    decision_note: ""
+    list_url: "https://vontobel.wd3.myworkdayjobs.com/wday/cxs/vontobel/Vontobel_External_Career/jobs"
+    facets: {"Location": ["187134fccb084a0ea9b4b95f23890dbe"]}    # Workday's id of "Switzerland" (verified 4 Nov 2026)
+    countries: []
+    places: []
+  temenos:                      # Temenos, Workday (tier T1)
+    enabled: false
+    permission_note: ""
+    decision_note: ""
+    list_url: "https://temenos.wd103.myworkdayjobs.com/wday/cxs/temenos/Temenoscareers/jobs"
+    facets: {}
+    countries: ["Switzerland", "Schweiz", "Suisse", "Svizzera", "CH", "CHE"]
+    places: ["Geneva", "Genève"]    # Temenos has its head office in Geneva; none of its 22 locations was Swiss on 4 Nov 2026
+  hitachienergy:                # Hitachi Energy, Workday (tier T1); the tenant "hitachi" is shared by the Hitachi group, so Swiss postings of other group companies can appear
+    enabled: true               # the user decided on 4 Nov 2026 to switch it on: the purpose is finding job descriptions
+    permission_note: "T1: public Workday CXS JSON interface that the career site itself calls; robots.txt of hitachi.wd1.myworkdayjobs.com allows /hitachi/ (checked 4 Nov 2026)"
+    decision_note: ""
+    list_url: "https://hitachi.wd1.myworkdayjobs.com/wday/cxs/hitachi/hitachi/jobs"
+    facets: {"locationCountry": ["187134fccb084a0ea9b4b95f23890dbe"]}    # Switzerland: 96 postings on 4 Nov 2026
+    countries: []
+    places: []
+  novartis:                     # Novartis, Workday (tier T1)
+    enabled: true               # the user decided on 4 Nov 2026 to switch it on: the purpose is finding job descriptions
+    permission_note: "T1: public Workday CXS JSON interface that the career site itself calls; robots.txt of novartis.wd3.myworkdayjobs.com allows /Novartis_Careers/ (checked 4 Nov 2026)"
+    decision_note: ""
+    list_url: "https://novartis.wd3.myworkdayjobs.com/wday/cxs/novartis/Novartis_Careers/jobs"
+    facets: {"locationCountry": ["187134fccb084a0ea9b4b95f23890dbe"]}    # Switzerland: 39 postings on 4 Nov 2026
+    countries: []
+    places: []
+  deutschebank:                 # Deutsche Bank, Workday (tier T1); site DBWebsite (PBWebsite and DWSWebsite also exist)
+    enabled: true               # the user decided on 4 Nov 2026 to switch it on: the purpose is finding job descriptions
+    permission_note: "T1: public Workday CXS JSON interface that the career site itself calls; robots.txt of db.wd3.myworkdayjobs.com allows /DBWebsite/ (checked 4 Nov 2026)"
+    decision_note: ""
+    list_url: "https://db.wd3.myworkdayjobs.com/wday/cxs/db/DBWebsite/jobs"
+    facets: {"Country": ["187134fccb084a0ea9b4b95f23890dbe"]}    # the key here is "Country", not "locationCountry"; Switzerland: 13 postings on 4 Nov 2026
+    countries: []
+    places: []
+  swissre:                      # Swiss Re, SAP SuccessFactors career site (tier T2: the terms of use may forbid automated reading)
+    enabled: false
+    permission_note: ""
+    decision_note: ""           # REQUIRED to switch on (tier T2): your decision and the risk you accepted, with the date
+    list_url: "https://careers.swissre.com/search/?locationsearch=Switzerland&locale=en_US"
+    country_codes: ["CH"]
+  ey:                           # EY, SAP SuccessFactors career site (tier T2); the host is careers.ey.com (www. does not answer)
+    enabled: false
+    permission_note: ""
+    decision_note: ""           # REQUIRED to switch on (tier T2)
+    list_url: "https://careers.ey.com/ey/search/?locationsearch=Switzerland&locale=en_US"
+    country_codes: ["CH"]
+  zurich:                       # Zurich Insurance, SAP SuccessFactors career site (tier T2); the host is www.careers.zurich.com (the bare host does not answer)
+    enabled: false
+    permission_note: ""
+    decision_note: ""           # REQUIRED to switch on (tier T2)
+    list_url: "https://www.careers.zurich.com/search/?locationsearch=Switzerland&locale=en_US"
+    country_codes: ["CH"]
+  scandit:                      # Scandit, Greenhouse board (tier T1, the public board interface)
+    enabled: false
+    permission_note: ""
+    decision_note: ""
+    list_url: "https://boards-api.greenhouse.io/v1/boards/scandit/jobs?content=true"
+    countries: ["Switzerland", "CHE", "CH"]
+    places: ["Zurich", "Zürich"]
+  getyourguide:                 # GetYourGuide, Greenhouse board (tier T1)
+    enabled: false
+    permission_note: ""
+    decision_note: ""
+    list_url: "https://boards-api.greenhouse.io/v1/boards/getyourguide/jobs?content=true"
+    countries: ["Switzerland", "CHE", "CH"]
+    places: ["Zurich", "Zürich"]
+  shares21:                     # 21Shares, Greenhouse board (tier T1)
+    enabled: false
+    permission_note: ""
+    decision_note: ""
+    list_url: "https://boards-api.greenhouse.io/v1/boards/21shares/jobs?content=true"
+    countries: ["Switzerland", "CHE", "CH"]
+    places: ["Zurich", "Zürich"]
+
+resolver:                       # goal.md 5.1a: find the complete description of a job that came without one (LinkedIn alerts)
+  # OFF until you switch it on. Only the sources listed below are ever asked (this is the allowlist of hosts); robots.txt of
+  # the host is read and respected first, including its crawl-delay; the run stops at the first 403, 429, 5xx or network error.
+  # permission_note decides the tier: a source WITH a note (who allowed what, when) is tier T1 (permitted); a source WITHOUT
+  # a note is tier T2 (the site's terms may forbid automated access) and is used only while accept_t2_risk is true, which
+  # is your own decision (goal.md 5.1a, 3 Nov 2026). Never evades bot protection or a login wall.
+  enabled: false
+  accept_t2_risk: false
+  delay_seconds: 5              # pause between two requests to a host (at least the host's robots.txt crawl-delay)
+  daily_cap_per_host: 60        # at most this many job attempts per host and day
+  max_attempt_days: 7           # a job is given up on after this many days with an attempt and no success
+  timeout_seconds: 30
+  user_agent: ""                # empty: the same as descriptions.user_agent
+  discovery:                    # goal.md 5.1a (a), v0.73.0: look for the same job (company + title) on the public job board of the company
+    enabled: false              # OFF until you have seen `resolve-descriptions --discovery --dry-run`; runs in `prepare` when true
+    window_days: 120            # only jobs first seen within this many days are looked up (1 to 365)
+    platforms: [greenhouse, ashby, lever]   # public job-board interfaces to guess board names on (greenhouse, ashby, lever)
+    local_twins: true           # copy the text of an open job of the same company that has a complete description and a close title
+    new_companies_per_day: 10   # at most this many companies get new board-name guesses per day (1 to 50)
+    miss_retry_days: 30         # a guess that found no board is asked again after this many days (1 to 365), at most 4 times
+  sources:                      # key -> platform (jibe, refline, liebherr or jobcloud), base_url, aliases (company names as the alert gives them)
+    axa:                        # AXA Switzerland, careers.axa.com (iCIMS / Jibe, public JSON list with the full text)
+      platform: jibe
+      base_url: "https://careers.axa.com"
+      list_url: ""              # optional: another address for the list (default: base_url + /api/jobs)
+      aliases: ["AXA", "AXA Switzerland", "AXA Versicherungen"]
+      permission_note: ""
+    zkb:                        # Zuercher Kantonalbank, apply.refline.ch (list page, schema.org JobPosting on each job page)
+      platform: refline
+      base_url: "https://apply.refline.ch/792841"
+      list_url: ""              # optional: another address for the list (default: base_url + /search.html)
+      aliases: ["Zürcher Kantonalbank", "ZKB"]
+      permission_note: ""
+    liebherr:                   # Liebherr, www.liebherr.com/de-ch/karriere (server-rendered search page, schema.org JobPosting on each job page)
+      platform: liebherr
+      base_url: "https://www.liebherr.com"
+      list_url: ""              # optional: another address for the search page (default: base_url + /de-ch/karriere/offene-stellen-3360980)
+      aliases: ["Liebherr", "Liebherr Group", "Liebherr-International AG"]
+      permission_note: ""
+    jobcloud:                   # jobs.ch job board (JobCloud): search page + schema.org JobPosting on the job page; job pages only, never the API
+      platform: jobcloud
+      base_url: "https://www.jobs.ch"
+      list_url: ""              # optional: another search page (default: base_url + /en/vacancies/)
+      any_company: true         # lists many employers: tried after the employer's own source failed or when none matches; only the job's company counts
+      aliases: []
+      permission_note: ""
+    jobup:                      # jobup.ch, the French-Swiss site of the same board (one host per source)
+      platform: jobcloud
+      base_url: "https://www.jobup.ch"
+      list_url: ""              # optional: another search page (default: base_url + /fr/emplois/)
+      any_company: true
+      aliases: []
+      permission_note: ""
+
+web:                            # goal.md 5.7, 5.9a: `python -m app web`; on the PC without a login, in the NAS container with one
+  host: "127.0.0.1"             # 127.0.0.1, localhost or ::1 only (the --host flag too); the container binds 0.0.0.0 by container_bind
+  port: 8000                    # 1 to 65535
+  # NAS container only (v0.74.0). container_bind true makes the web app listen on 0.0.0.0 INSIDE the container; it starts only when
+  # all four hold: env RECRUITMENT_CONTAINER=1 (the Dockerfile sets it), allowed_hosts not empty, login.username not empty,
+  # RECRUITMENT_WEB_PASSWORD_HASH in .env (make it with `python -m app set-web-password`). Otherwise it refuses to start.
+  container_bind: false
+  allowed_hosts: []             # the Host names served besides 127.0.0.1/localhost/::1, e.g. ["100.64.1.2"] (the ZeroTier address of the NAS)
+  login:
+    username: ""                # empty: no login (the PC default). Set: login required (also on the PC), hash from RECRUITMENT_WEB_PASSWORD_HASH
+    stay_days: 90               # 1 to 90 (default 90 since v0.76.0): how long "stay logged in" lasts, counted from the login; without it the session ends with the browser, at most 12 hours
+
+schedule:                       # goal.md 5.9: `python -m app schedule`, the daily run inside the container (Phase 5)
+  enabled: false                # off by default; true: prepare runs every day at prepare_time, then backup
+  prepare_time: "06:30"         # HH:MM wall-clock time in `timezone` (Europe/Zurich, so daylight saving time is followed)
+  run_backup: true              # run `backup` right after `prepare` (also when prepare failed); `finish` is never scheduled unless `headless.enabled`
+
+headless:                       # goal.md 5.10 (v0.78.0): the scoring, letter and review roles run as headless Claude Code in the `llm` service. Read by the scheduler only
+  enabled: false                # off by default (human-only switch). true: prepare, backup, then a request for the llm service, finish when it is done
+  max_wait_minutes: 270         # the scheduler waits this long for the llm service; must be below 300 (STEP_TIMEOUT_SECONDS is 5 hours)
+  poll_seconds: 20              # how often the scheduler looks for the done file (it touches its heartbeat on every look)
+  retry_after_limit: true       # a usage limit stops the chain; true: one more run after the reset time is read from the limit message
+  retry_latest: "20:00"         # HH:MM local time; a reset later than this means no retry today
+  retry_fallback_minutes: 300   # wait this long when the reset time cannot be read from the message (5 hours)
+  resume_attempts: 2            # unfinished CVs or letters of a run are tried this many more times, then the run is marked failed
+  roles:                        # full model ids, never aliases; timeouts and turns are first guesses (measured in T-HL-M)
+    scorer:
+      model: claude-sonnet-5-5
+      effort: medium            # low, medium, high, xhigh or max
+      timeout_minutes: 150
+      max_turns: 300
+    letters:
+      model: claude-sonnet-5-5
+      effort: medium
+      timeout_minutes: 45
+      max_turns: 120
+    review:
+      model: claude-opus-5-5
+      effort: low
+      timeout_minutes: 45
+      max_turns: 120
+  revision:                     # "Ask the writer to fix" on a blocked document (v0.85.0, goal.md 5.10a): one writer call and one reviewer call
+    wait_minutes: 75            # the scheduler waits this long for the done file of a revision (first guess); at least 2 x timeout_minutes + 15
+    quiet_minutes: 60           # no request is sent this long before the next daily prepare or retry (the daily chain goes first)
+    timeout_minutes: 20         # each of the two roles (first guess, measured in T-HL-M9)
+    max_turns: 40
+
+monitoring:                     # goal.md 5.9
+  zero_jobs_alert_after: 3      # warn when this many alert mails in a row had no jobs, or an employer adapter read nothing or failed this many runs in a row
+  lock_stale_hours: 6           # a run lock older than this is treated as left over from a crash
+  alerts: true                  # e-mail when a run or the backup fails, an adapter returns no jobs again and again, or the Gmail login is refused;
+                                # false: alerts are still recorded (`status` lists them) but nothing is sent

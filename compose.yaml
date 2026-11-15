@@ -1,0 +1,152 @@
+# Compose project of the job-match pipeline (goal.md 5.9, 5.9a; DEPLOYMENT_MANUAL.md).
+# Use:  copy compose.env.example to compose.env, edit it, then
+#       docker compose --env-file compose.env up -d --build
+# Nothing secret is in this file or in the image: config.yaml and .env are mounted read-only from the host.
+name: recruitment
+
+services:
+  recruitment:
+    build: .
+    image: recruitment:${IMAGE_TAG:-local}
+    # The Dockerfile starts 'python -m app schedule'. With schedule.enabled false (the default) it only idles.
+    # You run the other commands with:  docker compose exec recruitment python -m app status
+    user: "${APP_UID:-10001}:${APP_GID:-10001}"
+    init: true                         # signals reach the scheduler, no zombie processes
+    restart: unless-stopped
+    logging:                           # v0.78.2: Docker keeps at most 3 x 10 MB of this service's output
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    stop_grace_period: 60s
+    mem_limit: 512m                    # FIRST GUESS (goal.md 4 targets 150-300 MB); measure with 'docker stats', then adjust
+    read_only: true                    # the image is read-only; only the mounted folders and /tmp are writable
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    environment:
+      TZ: Europe/Zurich
+    volumes:
+      # Host folders (bind mounts). The paths come from compose.env; the defaults are folders next to this file.
+      - ${DATA_DIR:-./data}:/app/data
+      - ${EXCHANGE_DIR:-./exchange}:/app/exchange
+      - ${OUTPUT_DIR:-./output}:/app/output
+      - ${BACKUP_DIR:-./backups}:/app/backups
+      - ${LOGS_DIR:-./logs}:/app/logs
+      # Private files, read-only inside the container.
+      - ${CONFIG_FILE:-./config.yaml}:/app/config.yaml:ro
+      - ${SECRETS_FILE:-./.env}:/app/.env:ro
+    networks:
+      - recruitment_net
+    healthcheck:                       # the scheduler loop touches a heartbeat file; this only reads it
+      test: ["CMD", "python", "-m", "app", "schedule", "--health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # The web app (v0.74.0, goal.md 5.7, 5.9a): its own service from the same image, started only with the profile "web"
+  # (COMPOSE_PROFILES=web in compose.env). Inside the container it listens on 0.0.0.0 (web.container_bind in config.yaml),
+  # which the app allows only with a Host allow-list, a login and RECRUITMENT_CONTAINER=1. The port is published on two
+  # host addresses, never on all interfaces: WEB_BIND_IP (home LAN; NAS: 192.0.2.3) and WEB_BIND_IP_ZT (ZeroTier address).
+  # Both default to 127.0.0.1, so compose never fails when they are unset; when both are equal, compose merges the two lines.
+  web:
+    build: .
+    image: recruitment:${IMAGE_TAG:-local}
+    command: ["python", "-m", "app", "web", "--supervise", "--port", "8000"]      # fixed: the published port and the healthcheck use 8000; WEB_PORT is the host side only
+    user: "${APP_UID:-10001}:${APP_GID:-10001}"
+    init: true
+    restart: unless-stopped
+    logging:                           # v0.78.2: Docker keeps at most 3 x 10 MB of this service's output
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    mem_limit: 384m                    # the login hash (scrypt) needs 128 MiB for a moment, plus the app
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - web
+    environment:
+      TZ: Europe/Zurich
+    ports:
+      - "${WEB_BIND_IP:-127.0.0.1}:${WEB_PORT:-8000}:8000"
+      - "${WEB_BIND_IP_ZT:-127.0.0.1}:${WEB_PORT:-8000}:8000"
+    volumes:
+      # data: SQLite writes (WAL files) and the run lock; output: approving copies the PDF to output/approved; logs.
+      # backups: read-only, for the newest-backup line on /health (v0.80.6); exchange is not mounted.
+      - ${DATA_DIR:-./data}:/app/data
+      - ${OUTPUT_DIR:-./output}:/app/output
+      - ${BACKUP_DIR:-./backups}:/app/backups:ro
+      - ${LOGS_DIR:-./logs}:/app/logs
+      - ${CONFIG_FILE:-./config.yaml}:/app/config.yaml:ro
+      - ${SECRETS_FILE:-./.env}:/app/.env:ro
+    networks:
+      - recruitment_net
+    healthcheck:                       # a TCP connect to the app's own port
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('127.0.0.1', 8000), 3).close()"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+  # The headless Claude Code worker (v0.78.0, goal.md 5.9a, 5.10): the same image, started only with the profile "llm"
+  # (COMPOSE_PROFILES=web,llm on the NAS). It holds no database, no .env (Gmail password) and no config.yaml (home address):
+  # only the exchange folder, its own home (the CLI's login state and transcripts) and llm.env, which has the plan login line and
+  # nothing else. llm.env is mounted here and nowhere else, and it is not an env_file, so it is not in `docker inspect`.
+  # Its own network: it cannot reach the web service. It needs the internet for api.anthropic.com only.
+  llm:
+    build: .
+    image: recruitment:${IMAGE_TAG:-local}
+    command: ["python", "-m", "app", "llm-worker"]
+    user: "${APP_UID:-10001}:${APP_GID:-10001}"
+    init: true
+    restart: unless-stopped
+    logging:                           # v0.78.2: Docker keeps at most 3 x 10 MB of this service's output
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    stop_grace_period: 60s
+    mem_limit: 1g                      # FIRST GUESS for the CLI (a Node-sized process); measure with 'docker stats', then adjust
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    profiles:
+      - llm
+    environment:
+      TZ: Europe/Zurich
+      HOME: /home/llm
+      CLAUDE_CONFIG_DIR: /home/llm/.claude
+    volumes:
+      - ${EXCHANGE_DIR:-./exchange}:/app/exchange
+      - ${LLM_HOME_DIR:-./llm-home}:/home/llm
+      - ${LLM_SECRETS_FILE:-./llm.env}:/app/llm.env:ro
+    networks:
+      - recruitment_llm
+    healthcheck:                       # the worker touches a heartbeat file in its home; this only reads it
+      test: ["CMD", "python", "-m", "app", "llm-worker", "--health"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  recruitment_net:
+    name: recruitment_net
+    driver: bridge
+  recruitment_llm:
+    name: recruitment_llm
+    driver: bridge

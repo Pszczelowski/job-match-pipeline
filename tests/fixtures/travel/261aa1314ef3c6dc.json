@@ -1,0 +1,124 @@
+{
+ "stations": [
+  {
+   "id": "8503202",
+   "name": "Thalwil",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.29598,
+    "y": 8.564771
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8573167",
+   "name": "Thalwil, Zentrum",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.294926,
+    "y": 8.564538
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8573164",
+   "name": "Thalwil, Feldstrasse",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.290338,
+    "y": 8.559678
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8573165",
+   "name": "Thalwil, Schützenhaus",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.287778,
+    "y": 8.562238
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8573166",
+   "name": "Thalwil, Mühlebachplatz",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.29127,
+    "y": 8.564897
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8503791",
+   "name": "Thalwil, Ebnet",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.28837,
+    "y": 8.55719
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590829",
+   "name": "Thalwil, Trotte",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.291215,
+    "y": 8.565975
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590823",
+   "name": "Thalwil, Platte",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.289984,
+    "y": 8.568374
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590814",
+   "name": "Thalwil, Aubrigstrasse",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.288089,
+    "y": 8.569784
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590815",
+   "name": "Thalwil, Böni",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.284713,
+    "y": 8.565337
+   },
+   "distance": null,
+   "icon": "bus"
+  }
+ ]
+}

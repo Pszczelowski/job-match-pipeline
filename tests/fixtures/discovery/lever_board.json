@@ -1,0 +1,67 @@
+[
+ {
+  "id": "0a1b2c3d-0000-4000-8000-000000000001",
+  "text": "Senior Data Engineer",
+  "categories": {
+   "commitment": "Full-time",
+   "department": "Engineering",
+   "location": "Zurich",
+   "team": "Data",
+   "allLocations": [
+    "Zurich",
+    "Berlin"
+   ]
+  },
+  "country": "CH",
+  "createdAt": 1788199939703,
+  "workplaceType": "hybrid",
+  "hostedUrl": "https://jobs.lever.co/examplerobotics/0a1b2c3d-0000-4000-8000-000000000001",
+  "applyUrl": "https://jobs.lever.co/examplerobotics/0a1b2c3d-0000-4000-8000-000000000001/apply",
+  "opening": "<div>We build robots for warehouses.</div>",
+  "openingPlain": "We build robots for warehouses.",
+  "description": "<div>We build robots for warehouses.</div>",
+  "descriptionPlain": "We build robots for warehouses.",
+  "descriptionBody": "<div>The team is small and the work is varied.</div>",
+  "lists": [
+   {
+    "text": "Responsibilities",
+    "content": "<li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Plan and run the daily work with the team.</li><li>Review the work of others.</li>"
+   },
+   {
+    "text": "Requirements",
+    "content": "<li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Several years of experience in the field.</li><li>Good written English.</li>"
+   }
+  ],
+  "additional": "<div>We offer a fair salary and flexible hours.</div>",
+  "additionalPlain": "We offer a fair salary and flexible hours.",
+  "salaryRange": {
+   "currency": "CHF",
+   "interval": "per-year-salary",
+   "min": 100000,
+   "max": 120000
+  }
+ },
+ {
+  "id": "0a1b2c3d-0000-4000-8000-000000000002",
+  "text": "Platform Engineer",
+  "categories": {
+   "location": "Lisbon",
+   "allLocations": [
+    "Lisbon"
+   ]
+  },
+  "hostedUrl": "https://jobs.lever.co/examplerobotics/0a1b2c3d-0000-4000-8000-000000000002",
+  "descriptionPlain": "Short plain text only.",
+  "lists": [],
+  "additionalPlain": ""
+ },
+ {
+  "id": "0a1b2c3d-0000-4000-8000-000000000003",
+  "text": "Office Manager",
+  "categories": {},
+  "hostedUrl": "https://jobs.lever.co/examplerobotics/0a1b2c3d-0000-4000-8000-000000000003",
+  "description": "",
+  "descriptionPlain": "",
+  "lists": []
+ }
+]

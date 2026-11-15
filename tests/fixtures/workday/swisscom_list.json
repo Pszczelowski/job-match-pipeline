@@ -1,0 +1,45 @@
+{
+ "total": 56,
+ "jobPostings": [
+  {
+   "title": "Engineer - Geo Platform",
+   "externalPath": "/job/Bern/Data-Engineer---Geo-Platform_R-0006447-1",
+   "locationsText": "2 Locations",
+   "postedOn": "Posted Yesterday",
+   "remoteType": "80-100%",
+   "bulletFields": [
+    "R-0006447"
+   ]
+  },
+  {
+   "title": "Sales Manager Digital Media & LMS",
+   "externalPath": "/job/Zurich/Sales-Manager-Digital-Media---LMS_R-0006622",
+   "locationsText": "Zurich",
+   "postedOn": "Posted 25 Days Ago",
+   "remoteType": "60-80%",
+   "bulletFields": [
+    "R-0006622"
+   ]
+  },
+  {
+   "title": "Apprendistato: Impiegato/a del commercio al dettaglio AFC",
+   "externalPath": "/job/S-Antonino/Apprendistato--Impiegato-a-del-commercio-al-dettaglio-AFC_R-0005985",
+   "locationsText": "S. Antonino",
+   "postedOn": "Posted Yesterday",
+   "remoteType": "100%",
+   "bulletFields": [
+    "R-0005985"
+   ]
+  },
+  {
+   "title": "Application Manager:in Banking (80–100 %)",
+   "externalPath": "/job/Zurich/Application-Manager-in-Banking--80-100---_R-0006879-1",
+   "locationsText": "2 Locations",
+   "postedOn": "Posted Yesterday",
+   "remoteType": "80-100%",
+   "bulletFields": [
+    "R-0006879"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,41 @@
+{
+ "total": 23,
+ "jobPostings": [
+  {
+   "title": "Senior People Lead - Compensation & Benefits",
+   "externalPath": "/job/London/Senior-People-Lead---Compensation---Benefits_JR2428",
+   "locationsText": "London",
+   "postedOn": "Posted Today",
+   "bulletFields": [
+    "JR2428"
+   ]
+  },
+  {
+   "title": "Regional Partner Sales Executive",
+   "externalPath": "/job/United-States-Remote/Regional-Partner-Sales-Executive_JR2178",
+   "locationsText": "United States Remote",
+   "postedOn": "Posted Yesterday",
+   "bulletFields": [
+    "JR2178"
+   ]
+  },
+  {
+   "title": "Strategic Bid Manager - Global",
+   "externalPath": "/job/London/Strategic-Bid-Manager---Global_JR2344",
+   "locationsText": "2 Locations",
+   "postedOn": "Posted 4 Days Ago",
+   "bulletFields": [
+    "JR2344"
+   ]
+  },
+  {
+   "title": "Director - Strategy Execution",
+   "externalPath": "/job/Singapore/Transformation-Director_JR2416",
+   "locationsText": "Singapore",
+   "postedOn": "Posted 6 Days Ago",
+   "bulletFields": [
+    "JR2416"
+   ]
+  }
+ ]
+}

@@ -1,0 +1,40 @@
+{
+ "code": "Ok",
+ "routes": [
+  {
+   "legs": [
+    {
+     "steps": [],
+     "weight": 11994.9,
+     "summary": "",
+     "duration": 11994.9,
+     "distance": 290257.3
+    }
+   ],
+   "weight_name": "routability",
+   "weight": 11994.9,
+   "duration": 11994.9,
+   "distance": 290257.3
+  }
+ ],
+ "waypoints": [
+  {
+   "hint": "GZTKgP___38GAAAABgAAAAcAAADDAAAAsvQjQAAAAAD0eTJAig6iQgYAAAAGAAAABwAAAMMAAADLKQEAvUKCAI0p1QKSQIIAbijVAgIAvwkAAAAA",
+   "location": [
+    8.50000,
+    47.50000
+   ],
+   "name": "",
+   "distance": 52.58396437
+  },
+  {
+   "hint": "4gElgCy9RoZBAAAAEwAAAAAAAAAnAAAARemRQrS0oUEAAAAAhvssQkEAAAATAAAAAAAAACcAAADLKQEADb1dAPsawQLyuV0AohzBAgAAnw0AAAAA",
+   "location": [
+    6.143245,
+    46.209787
+   ],
+   "name": "Place de Cornavin",
+   "distance": 77.28220111
+  }
+ ]
+}

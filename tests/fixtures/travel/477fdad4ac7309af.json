@@ -1,0 +1,28 @@
+{
+ "stations": [
+  {
+   "id": "8011068",
+   "name": "Frankfurt (Main) Hbf",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 50.106683,
+    "y": 8.662832
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8011065",
+   "name": "Frankfurt (Main) Süd",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 50.099365,
+    "y": 8.686457
+   },
+   "distance": null,
+   "icon": null
+  }
+ ]
+}

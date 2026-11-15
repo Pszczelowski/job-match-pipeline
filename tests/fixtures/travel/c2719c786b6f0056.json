@@ -1,0 +1,124 @@
+{
+ "stations": [
+  {
+   "id": "8505300",
+   "name": "Lugano",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.005502,
+    "y": 8.946996
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8591603",
+   "name": "Lugano, Centro",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.005983,
+    "y": 8.952448
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8591599",
+   "name": "Lugano, ai Frati",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.008753,
+    "y": 8.949601
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8591616",
+   "name": "Lugano, Centro di Calcolo",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.024417,
+    "y": 8.960399
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8505391",
+   "name": "Lugano FLP",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.004491,
+    "y": 8.947598
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8575245",
+   "name": "Lugano, Piazza Rezzonico",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.002713,
+    "y": 8.950634
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8579022",
+   "name": "Lugano, Piazza Luini",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.000267,
+    "y": 8.9497
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8575310",
+   "name": "Lugano, Genzana",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.008865,
+    "y": 8.946744
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8588108",
+   "name": "Lugano, Via Ginevra",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.007886,
+    "y": 8.952592
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8530461",
+   "name": "Lugano Città (funicolare)",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.004479,
+    "y": 8.949682
+   },
+   "distance": null,
+   "icon": "cableway"
+  }
+ ]
+}

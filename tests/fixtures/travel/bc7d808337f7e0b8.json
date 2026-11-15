@@ -1,0 +1,40 @@
+{
+ "code": "Ok",
+ "routes": [
+  {
+   "legs": [
+    {
+     "steps": [],
+     "weight": 2070.2,
+     "summary": "",
+     "duration": 2060.3,
+     "distance": 34867.9
+    }
+   ],
+   "weight_name": "routability",
+   "weight": 2070.2,
+   "duration": 2060.3,
+   "distance": 34867.9
+  }
+ ],
+ "waypoints": [
+  {
+   "hint": "GZTKgP___38GAAAABgAAAAcAAADDAAAAsvQjQAAAAAD0eTJAig6iQgYAAAAGAAAABwAAAMMAAADLKQEAvUKCAI0p1QKSQIIAbijVAgIAvwkAAAAA",
+   "location": [
+    8.50000,
+    47.50000
+   ],
+   "name": "",
+   "distance": 52.58396437
+  },
+  {
+   "hint": "oUX_gkH9Q5BLAAAAJwAAAAAAAAAKAAAAnjxQQkev1kEAAAAAwoHiQEsAAAAnAAAAAAAAAAoAAADLKQEA_LCCAFuu0QIisIIA7K3RAgAA_wgAAAAA",
+   "location": [
+    8.564988,
+    47.296091
+   ],
+   "name": "Bahnhofstrasse",
+   "distance": 20.60030486
+  }
+ ]
+}

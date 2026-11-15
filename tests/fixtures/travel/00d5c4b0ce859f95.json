@@ -1,0 +1,40 @@
+{
+ "code": "Ok",
+ "routes": [
+  {
+   "legs": [
+    {
+     "steps": [],
+     "weight": 7656.9,
+     "summary": "",
+     "duration": 4380.7,
+     "distance": 97120.3
+    }
+   ],
+   "weight_name": "routability",
+   "weight": 7656.9,
+   "duration": 4380.7,
+   "distance": 97120.3
+  }
+ ],
+ "waypoints": [
+  {
+   "hint": "GZTKgP___38GAAAABgAAAAcAAADDAAAAsvQjQAAAAAD0eTJAig6iQgYAAAAGAAAABwAAAMMAAADLKQEAvUKCAI0p1QKSQIIAbijVAgIAvwkAAAAA",
+   "location": [
+    8.50000,
+    47.50000
+   ],
+   "name": "",
+   "distance": 52.58396437
+  },
+  {
+   "hint": "UBQLhf___38GAAAABgAAAL4AAAA0AAAAtU2FQAAAAAA6VPtCNoYIQgYAAAAGAAAAvgAAADQAAADLKQEA885zAAuG1QK4znMAEoTVAhQADwYAAAAA",
+   "location": [
+    7.589619,
+    47.547915
+   ],
+   "name": "Centralbahnstrasse",
+   "distance": 56.32197407
+  }
+ ]
+}

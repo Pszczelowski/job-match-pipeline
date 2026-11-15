@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Reject job {{ j.id }} - Recruitment{% endblock %}
+{% block content %}
+<p><a href="/jobs/{{ j.id }}">&larr; Back to the job</a></p>
+<h1>Reject this job?</h1>
+<p><strong>{{ j.title }}</strong><br><span class="where">{{ j.company }} &middot; job {{ j.id }} &middot; status {{ j.status }}</span></p>
+{% if why_not %}
+<p class="notice refused">{{ why_not }}</p>
+{% else %}
+{% if j.status == 'applied' %}
+<p class="notice refused">You marked this job as applied. Rejecting it archives the application: it leaves the Applied page and no longer counts
+  in the Analytics response rate; restore-job brings it back as applied (the date of the application is then the restore date).</p>
+{% endif %}
+<p>The job leaves Today's Top 10 and the list of open jobs and is moved to the archive with the reason <code>user_rejected</code>.
+  It is not deleted: the whole record is kept in the archive, and approved documents stay on disk.
+  A wrong rejection can be undone at the command line: <code>python -m app archive</code> shows the archive entry number,
+  <code>python -m app restore-job &lt;archive id&gt;</code> brings the job back with the status it had before (an applied job stays applied; a job without an application comes back as <code>new</code> and the filters run again).</p>
+<form method="post" action="/jobs/{{ j.id }}/reject" class="confirm">
+  <input type="hidden" name="csrf" value="{{ csrf('reject:' ~ j.id) }}">
+  <input type="hidden" name="next" value="{{ nxt }}">
+  <p><label for="comment">Comment (optional, up to {{ comment_max }} characters)</label><br>
+    <input type="text" id="comment" name="comment" maxlength="{{ comment_max }}" size="60" autocomplete="off"></p>
+  <p><button type="submit" name="confirm" value="yes" class="reject">Yes, reject this job</button>
+    <a class="button" href="/jobs/{{ j.id }}">Cancel</a></p>
+</form>
+{% endif %}
+{% endblock %}

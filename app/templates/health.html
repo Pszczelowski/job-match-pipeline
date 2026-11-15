@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% from "_bars.html" import chart %}
+{% block title %}Runs and health - Recruitment{% endblock %}
+{% block content %}
+<h1>Runs and health</h1>
+<p class="meta">Read-only. Ids, times, counts and statuses only: no mail text, no addresses, no report or import error text. Times are UTC.</p>
+
+<section class="group">
+<h2>Database and backup</h2>
+<ul>
+  <li>Schema version: {{ h.schema.version }} (this app expects {{ h.schema.expected }}).</li>
+  {% if h.backup %}<li>Newest backup: <code>{{ h.backup.name }}</code>, {{ h.backup.time }}, {{ h.backup.size }} bytes.</li>
+  {% elif h.backup_folder == "missing" %}<li>Newest backup: the backup folder cannot be read in this container (the web service needs the mount <code>./backups:/app/backups:ro</code>, DEPLOYMENT_MANUAL 11).</li>
+  {% else %}<li>Newest backup: nothing yet (no <code>jobs_&lt;timestamp&gt;.db</code> in the backup folder).</li>{% endif %}
+</ul>
+</section>
+
+<section class="group">
+<h2>Daily run</h2>
+<ul>
+  <li>Run lock: {% if h.lock.state == "free" %}free{% elif h.lock.state == "held" %}held since {{ h.lock.started }}, pid {{ h.lock.pid }}{% if not h.lock.pid_checkable %} (pid not checked here){% endif %}{% elif h.lock.state == "left_over" %}<span class="st failed">left over</span>: {{ h.lock.reason }} (since {{ h.lock.started }}, pid {{ h.lock.pid }}){% else %}<span class="st failed">unreadable</span>: {{ h.lock.reason }}{% endif %}.</li>
+  {% if h.last_ok_prepare %}<li>Last successful prepare: {{ h.last_ok_prepare.time }}, {{ h.last_ok_prepare.hours }} h ago{% if h.last_ok_prepare.late %} <span class="st failed">over 30 h</span>{% endif %}.</li>
+  {% else %}<li>Last successful prepare: none on record.</li>{% endif %}
+  {% if h.heartbeat %}<li>Scheduler heartbeat: {{ h.heartbeat.time }}, {{ h.heartbeat.seconds }} s ago.</li>
+  {% else %}<li>Scheduler heartbeat: missing.</li>{% endif %}
+</ul>
+</section>
+
+<section class="group">
+<h2>Last 20 runs</h2>
+{% if not h.runs %}<p class="empty">nothing yet</p>{% else %}
+{{ chart(charts, "chart-runs", "Length of the last 20 runs in minutes, oldest first; green ok, red failed", "m") }}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Run</th><th>Started</th><th>Finished</th><th>Status</th></tr></thead>
+  <tbody>{% for r in h.runs %}<tr><td>{{ r.id }}</td><td class="n">{{ r.started_at }}</td><td class="n">{{ r.finished_at or "-" }}</td><td class="n"><span class="st {{ r.status }}">{{ r.status }}</span></td></tr>{% endfor %}</tbody>
+</table></div>
+</details>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Last 20 adapter runs</h2>
+{% if not h.adapter_runs %}<p class="empty">nothing yet</p>{% else %}
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Started</th><th>Run</th><th>Adapter</th><th>Found</th><th>New</th><th>Result</th></tr></thead>
+  <tbody>{% for r in h.adapter_runs %}<tr><td class="n">{{ r.started_at }}</td><td>{{ r.run_id }}</td><td>{{ r.adapter }}</td><td class="n">{{ r.found }}</td><td class="n">{{ r.new_jobs }}</td>
+    <td class="n">{% if r.failed %}<span class="st failed">failed</span>{% else %}<span class="st ok">ok</span>{% endif %}{% if r.warned %} <span class="flag">warning</span>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Last 20 alerts</h2>
+{% if not h.alerts %}<p class="empty">nothing yet</p>{% else %}
+<div class="tablewrap"><table>
+  <thead><tr><th>Key</th><th>Message</th><th>Count</th><th>First seen</th><th>Last seen</th><th>State</th></tr></thead>
+  <tbody>{% for a in h.alerts %}<tr><td>{{ a.key }}</td><td class="wide">{{ a.message }}</td><td class="n">{{ a.count }}</td><td class="n">{{ a.first_seen }}</td><td class="n">{{ a.last_seen }}</td>
+    <td class="n">{% if a.resolved_at %}resolved {{ a.resolved_at }}{% else %}<span class="st failed">open</span>{% endif %}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Last 10 result imports</h2>
+{% if not h.imports %}<p class="empty">nothing yet</p>{% else %}
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Id</th><th>Batch</th><th>Status</th><th>Imported</th></tr></thead>
+  <tbody>{% for i in h.imports %}<tr><td class="n">{{ i.id }}</td><td>{{ i.batch_id or "-" }}</td><td class="n">{{ i.status }}</td><td class="n">{{ i.imported_at }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Last 10 daily reports</h2>
+{% if not h.reports %}<p class="empty">nothing yet</p>{% else %}
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Batch</th><th>Status</th><th>Attempts</th><th>Created</th><th>Sent</th></tr></thead>
+  <tbody>{% for r in h.reports %}<tr><td>{{ r.batch_id }}</td><td class="n"><span class="st {{ 'ok' if r.status == 'sent' else 'failed' }}">{{ r.status }}</span></td><td class="n">{{ r.attempts }}</td><td class="n">{{ r.created_at }}</td><td class="n">{{ r.sent_at or "-" }}</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Job page reads, last 7 days</h2>
+{% if not h.fetches %}<p class="empty">nothing yet</p>{% else %}
+{{ chart(charts, "chart-fetches", "Job page reads per outcome, last 7 days", "s") }}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Outcome</th><th>Pages</th></tr></thead>
+  <tbody>{% for f in h.fetches %}<tr><td>{{ f.status }}</td><td class="n">{{ f.count }}</td></tr>{% endfor %}</tbody>
+</table></div>
+</details>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Postponed jobs (no score yet)</h2>
+{{ chart(charts, "chart-postponed", "Postponed jobs per reason", "s") }}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Reason</th><th>Jobs</th></tr></thead>
+  <tbody>{% for label, n in h.postponements.items() %}<tr><td>{{ label }}</td><td class="n">{{ n }}</td></tr>{% endfor %}</tbody>
+</table></div>
+</details>
+
+<p class="meta">Travel times: public transport data from opentransportdata.swiss (queried through transport.opendata.ch).</p>
+</section>
+<script type="application/json" id="chart-data">{{ charts|tojson }}</script>
+<script src="/static/vendor/chart.umd.min.js" defer></script>
+<script src="/static/charts.js" defer></script>
+{% endblock %}

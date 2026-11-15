@@ -1,0 +1,124 @@
+{
+ "stations": [
+  {
+   "id": "8503000",
+   "name": "Zürich HB",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.378176,
+    "y": 8.540212
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8530812",
+   "name": "Zürich, Hegibachplatz",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.361689,
+    "y": 8.560621
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8530813",
+   "name": "Zürich, Kreuzplatz",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.364877,
+    "y": 8.554082
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8503059",
+   "name": "Zürich Stadelhofen, Bahnhof",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.36635,
+    "y": 8.548126
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8503006",
+   "name": "Zürich Oerlikon",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.411531,
+    "y": 8.544137
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8530811",
+   "name": "Zürich, Balgrist",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.354575,
+    "y": 8.575021
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8503020",
+   "name": "Zürich Hardbrücke",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.385196,
+    "y": 8.517125
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8503003",
+   "name": "Zürich Stadelhofen",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.366611,
+    "y": 8.548485
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8503016",
+   "name": "Zürich Flughafen",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.450387,
+    "y": 8.5624
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8588078",
+   "name": "Zürich, Central",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.376844,
+    "y": 8.54394
+   },
+   "distance": null,
+   "icon": "tram"
+  }
+ ]
+}

@@ -1,0 +1,26 @@
+# Template of scripts/public_copy.local.yaml (untracked, listed in .gitignore). Copy it, fill in the real values, never commit the copy.
+# Keys only: no value here is real.
+#
+# replacements: applied in order to every copied text file (after scripts/public_copy.yaml `replacements`, never to the files in
+#   `replace_skip_paths`). Each entry: find (text), replace (text), optional regex (true), ignore_case (true), skip_paths (globs of files left alone), paths (globs of the
+#   files the entry applies to; default all). A replacement keeps the format of what it replaces (an e-mail address stays an
+#   e-mail address at example.com, a phone number stays a phone number of zeros).
+# denylist: literals that must not survive anywhere in the copy (compared NFKD-folded and case-insensitive, so one spelling
+#   covers the diacritic ones). Real name, e-mail address, phone, street, home town, NAS and LAN addresses, ZeroTier network id,
+#   past and current employers, names and phones of recruiters in the test fixtures. An entry may be {value: text, exempt_paths:
+#   [globs]} where a literal has to stay in files that replay recorded answers (the home town in the travel fixtures).
+
+replacements:
+  - {find: "real.name@real-mail.example", replace: "alex.morgan@example.com"}
+  - {find: "Real Name", replace: "Alex Morgan"}
+  - {find: "\\bEmployer\\b", replace: "Contoso", regex: true, paths: ["tests/test_traceability.py"]}
+
+denylist:
+  - "Real Name"
+  - "real.name@real-mail.example"
+  - "+41 00 000 00 00"
+  - "Home Street 1"
+  - {value: "Home Town", exempt_paths: ["tests/fixtures/travel/*"]}
+  - "198.51.100.7"
+  - "0123456789abcdef"
+  - "Past Employer"

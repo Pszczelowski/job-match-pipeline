@@ -1,0 +1,310 @@
+{
+ "connections": [
+  {
+   "from": {
+    "station": {
+     "id": "8503000",
+     "name": "Zürich HB",
+     "score": null,
+     "coordinate": {
+      "type": "WGS84",
+      "x": 47.378176,
+      "y": 8.540212
+     },
+     "distance": null
+    },
+    "arrival": null,
+    "arrivalTimestamp": null,
+    "departure": "2026-11-02T07:34:00+0100",
+    "departureTimestamp": 1793601240,
+    "delay": null,
+    "platform": "10",
+    "prognosis": {
+     "platform": null,
+     "arrival": null,
+     "departure": null,
+     "capacity1st": null,
+     "capacity2nd": null
+    },
+    "realtimeAvailability": null,
+    "location": {
+     "id": "8503000",
+     "name": "Zürich HB",
+     "score": null,
+     "coordinate": {
+      "type": "WGS84",
+      "x": 47.378176,
+      "y": 8.540212
+     },
+     "distance": null
+    }
+   },
+   "to": {
+    "station": {
+     "id": "8500010",
+     "name": "Basel SBB",
+     "score": null,
+     "coordinate": {
+      "type": "WGS84",
+      "x": 47.547413,
+      "y": 7.58956
+     },
+     "distance": null
+    },
+    "arrival": "2026-11-02T08:26:00+0100",
+    "arrivalTimestamp": 1793604360,
+    "departure": null,
+    "departureTimestamp": null,
+    "delay": null,
+    "platform": "11",
+    "prognosis": {
+     "platform": null,
+     "arrival": null,
+     "departure": null,
+     "capacity1st": null,
+     "capacity2nd": null
+    },
+    "realtimeAvailability": null,
+    "location": {
+     "id": "8500010",
+     "name": "Basel SBB",
+     "score": null,
+     "coordinate": {
+      "type": "WGS84",
+      "x": 47.547413,
+      "y": 7.58956
+     },
+     "distance": null
+    }
+   },
+   "duration": "00d00:52:00",
+   "transfers": 0,
+   "service": null,
+   "products": [
+    "IC 3"
+   ],
+   "capacity1st": null,
+   "capacity2nd": null,
+   "sections": [
+    {
+     "journey": {
+      "name": "000558",
+      "category": "IC",
+      "subcategory": null,
+      "categoryCode": null,
+      "number": "3",
+      "operator": "SBB",
+      "to": "Basel SBB",
+      "passList": [
+       {
+        "station": {
+         "id": "8503000",
+         "name": "Zürich HB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.378176,
+          "y": 8.540212
+         },
+         "distance": null
+        },
+        "arrival": null,
+        "arrivalTimestamp": null,
+        "departure": "2026-11-02T07:34:00+0100",
+        "departureTimestamp": 1793601240,
+        "delay": null,
+        "platform": "10",
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8503000",
+         "name": "Zürich HB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.378176,
+          "y": 8.540212
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8500010",
+         "name": "Basel SBB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.547413,
+          "y": 7.58956
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-02T08:26:00+0100",
+        "arrivalTimestamp": 1793604360,
+        "departure": null,
+        "departureTimestamp": null,
+        "delay": null,
+        "platform": "11",
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8500010",
+         "name": "Basel SBB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.547413,
+          "y": 7.58956
+         },
+         "distance": null
+        }
+       }
+      ],
+      "capacity1st": null,
+      "capacity2nd": null
+     },
+     "walk": null,
+     "departure": {
+      "station": {
+       "id": "8503000",
+       "name": "Zürich HB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.378176,
+        "y": 8.540212
+       },
+       "distance": null
+      },
+      "arrival": null,
+      "arrivalTimestamp": null,
+      "departure": "2026-11-02T07:34:00+0100",
+      "departureTimestamp": 1793601240,
+      "delay": null,
+      "platform": "10",
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8503000",
+       "name": "Zürich HB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.378176,
+        "y": 8.540212
+       },
+       "distance": null
+      }
+     },
+     "arrival": {
+      "station": {
+       "id": "8500010",
+       "name": "Basel SBB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.547413,
+        "y": 7.58956
+       },
+       "distance": null
+      },
+      "arrival": "2026-11-02T08:26:00+0100",
+      "arrivalTimestamp": 1793604360,
+      "departure": null,
+      "departureTimestamp": null,
+      "delay": null,
+      "platform": "11",
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8500010",
+       "name": "Basel SBB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.547413,
+        "y": 7.58956
+       },
+       "distance": null
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "from": {
+  "id": "8503000",
+  "name": "Zürich HB",
+  "score": null,
+  "coordinate": {
+   "type": "WGS84",
+   "x": 47.378176,
+   "y": 8.540212
+  },
+  "distance": null
+ },
+ "to": {
+  "id": "8500010",
+  "name": "Basel SBB",
+  "score": null,
+  "coordinate": {
+   "type": "WGS84",
+   "x": 47.547413,
+   "y": 7.58956
+  },
+  "distance": null
+ },
+ "stations": {
+  "from": [
+   {
+    "id": "8503000",
+    "name": "Zürich HB",
+    "score": null,
+    "coordinate": {
+     "type": "WGS84",
+     "x": 47.378176,
+     "y": 8.540212
+    },
+    "distance": null
+   }
+  ],
+  "to": [
+   {
+    "id": "8500010",
+    "name": "Basel SBB",
+    "score": null,
+    "coordinate": {
+     "type": "WGS84",
+     "x": 47.547413,
+     "y": 7.58956
+    },
+    "distance": null
+   }
+  ]
+ }
+}

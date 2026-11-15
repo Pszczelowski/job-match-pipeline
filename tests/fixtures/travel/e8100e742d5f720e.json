@@ -1,0 +1,1670 @@
+{
+ "connections": [
+  {
+   "from": {
+    "station": {
+     "id": "8503000",
+     "name": "Zürich HB",
+     "score": null,
+     "coordinate": {
+      "type": "WGS84",
+      "x": 47.378176,
+      "y": 8.540212
+     },
+     "distance": null
+    },
+    "arrival": null,
+    "arrivalTimestamp": null,
+    "departure": "2026-11-01T15:34:00+0100",
+    "departureTimestamp": 1793543640,
+    "delay": null,
+    "platform": "15",
+    "prognosis": {
+     "platform": null,
+     "arrival": null,
+     "departure": null,
+     "capacity1st": null,
+     "capacity2nd": null
+    },
+    "realtimeAvailability": null,
+    "location": {
+     "id": "8503000",
+     "name": "Zürich HB",
+     "score": null,
+     "coordinate": {
+      "type": "WGS84",
+      "x": 47.378176,
+      "y": 8.540212
+     },
+     "distance": null
+    }
+   },
+   "to": {
+    "station": {
+     "id": "8011068",
+     "name": "Frankfurt (Main) Hbf",
+     "score": null,
+     "coordinate": {
+      "type": "WGS84",
+      "x": 50.106683,
+      "y": 8.662832
+     },
+     "distance": null
+    },
+    "arrival": "2026-11-01T23:03:00+0100",
+    "arrivalTimestamp": 1793570580,
+    "departure": null,
+    "departureTimestamp": null,
+    "delay": null,
+    "platform": "",
+    "prognosis": {
+     "platform": null,
+     "arrival": null,
+     "departure": null,
+     "capacity1st": null,
+     "capacity2nd": null
+    },
+    "realtimeAvailability": null,
+    "location": {
+     "id": "8011068",
+     "name": "Frankfurt (Main) Hbf",
+     "score": null,
+     "coordinate": {
+      "type": "WGS84",
+      "x": 50.106683,
+      "y": 8.662832
+     },
+     "distance": null
+    }
+   },
+   "duration": "00d07:29:00",
+   "transfers": 4,
+   "service": null,
+   "products": [
+    "TGV",
+    "TER",
+    "P34",
+    "T34",
+    "651B"
+   ],
+   "capacity1st": null,
+   "capacity2nd": null,
+   "sections": [
+    {
+     "journey": {
+      "name": "009226",
+      "category": "TGV",
+      "subcategory": null,
+      "categoryCode": null,
+      "number": "009226",
+      "operator": "SBB",
+      "to": "Paris Gare de Lyon",
+      "passList": [
+       {
+        "station": {
+         "id": "8503000",
+         "name": "Zürich HB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.378176,
+          "y": 8.540212
+         },
+         "distance": null
+        },
+        "arrival": null,
+        "arrivalTimestamp": null,
+        "departure": "2026-11-01T15:34:00+0100",
+        "departureTimestamp": 1793543640,
+        "delay": null,
+        "platform": "15",
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8503000",
+         "name": "Zürich HB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.378176,
+          "y": 8.540212
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8500010",
+         "name": "Basel SBB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.547413,
+          "y": 7.58956
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T16:26:00+0100",
+        "arrivalTimestamp": 1793546760,
+        "departure": null,
+        "departureTimestamp": null,
+        "delay": null,
+        "platform": "6",
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8500010",
+         "name": "Basel SBB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.547413,
+          "y": 7.58956
+         },
+         "distance": null
+        }
+       }
+      ],
+      "capacity1st": null,
+      "capacity2nd": null
+     },
+     "walk": null,
+     "departure": {
+      "station": {
+       "id": "8503000",
+       "name": "Zürich HB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.378176,
+        "y": 8.540212
+       },
+       "distance": null
+      },
+      "arrival": null,
+      "arrivalTimestamp": null,
+      "departure": "2026-11-01T15:34:00+0100",
+      "departureTimestamp": 1793543640,
+      "delay": null,
+      "platform": "15",
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8503000",
+       "name": "Zürich HB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.378176,
+        "y": 8.540212
+       },
+       "distance": null
+      }
+     },
+     "arrival": {
+      "station": {
+       "id": "8500010",
+       "name": "Basel SBB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.547413,
+        "y": 7.58956
+       },
+       "distance": null
+      },
+      "arrival": "2026-11-01T16:26:00+0100",
+      "arrivalTimestamp": 1793546760,
+      "departure": null,
+      "departureTimestamp": null,
+      "delay": null,
+      "platform": "6",
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8500010",
+       "name": "Basel SBB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.547413,
+        "y": 7.58956
+       },
+       "distance": null
+      }
+     }
+    },
+    {
+     "journey": {
+      "name": "096292",
+      "category": "TER",
+      "subcategory": null,
+      "categoryCode": null,
+      "number": "096292",
+      "operator": "SBB",
+      "to": "Strasbourg",
+      "passList": [
+       {
+        "station": {
+         "id": "8500010",
+         "name": "Basel SBB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.547413,
+          "y": 7.58956
+         },
+         "distance": null
+        },
+        "arrival": null,
+        "arrivalTimestamp": null,
+        "departure": "2026-11-01T16:39:00+0100",
+        "departureTimestamp": 1793547540,
+        "delay": null,
+        "platform": "31",
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8500010",
+         "name": "Basel SBB",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.547413,
+          "y": 7.58956
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8718213",
+         "name": "Saint-Louis (Haut-Rhin)",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.590312,
+          "y": 7.55538
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T16:46:00+0100",
+        "arrivalTimestamp": 1793547960,
+        "departure": "2026-11-01T16:47:00+0100",
+        "departureTimestamp": 1793548020,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8718213",
+         "name": "Saint-Louis (Haut-Rhin)",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.590312,
+          "y": 7.55538
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8718206",
+         "name": "Mulhouse",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.741954,
+          "y": 7.343045
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T17:01:00+0100",
+        "arrivalTimestamp": 1793548860,
+        "departure": "2026-11-01T17:03:00+0100",
+        "departureTimestamp": 1793548980,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8718206",
+         "name": "Mulhouse",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.741954,
+          "y": 7.343045
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8718270",
+         "name": "Bollwiller",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.85702,
+          "y": 7.267577
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T17:13:00+0100",
+        "arrivalTimestamp": 1793549580,
+        "departure": "2026-11-01T17:14:00+0100",
+        "departureTimestamp": 1793549640,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8718270",
+         "name": "Bollwiller",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.85702,
+          "y": 7.267577
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8718233",
+         "name": "Rouffach",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.96032,
+          "y": 7.312619
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T17:20:00+0100",
+        "arrivalTimestamp": 1793550000,
+        "departure": "2026-11-01T17:21:00+0100",
+        "departureTimestamp": 1793550060,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8718233",
+         "name": "Rouffach",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 47.96032,
+          "y": 7.312619
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8718201",
+         "name": "Colmar",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.072472,
+          "y": 7.346548
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T17:29:00+0100",
+        "arrivalTimestamp": 1793550540,
+        "departure": "2026-11-01T17:31:00+0100",
+        "departureTimestamp": 1793550660,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8718201",
+         "name": "Colmar",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.072472,
+          "y": 7.346548
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721405",
+         "name": "Sélestat",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.260293,
+          "y": 7.443036
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T17:41:00+0100",
+        "arrivalTimestamp": 1793551260,
+        "departure": "2026-11-01T17:42:00+0100",
+        "departureTimestamp": 1793551320,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721405",
+         "name": "Sélestat",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.260293,
+          "y": 7.443036
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721412",
+         "name": "Benfeld",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.373671,
+          "y": 7.583802
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T17:51:00+0100",
+        "arrivalTimestamp": 1793551860,
+        "departure": "2026-11-01T17:52:00+0100",
+        "departureTimestamp": 1793551920,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721412",
+         "name": "Benfeld",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.373671,
+          "y": 7.583802
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721414",
+         "name": "Erstein",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.423169,
+          "y": 7.638519
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T17:57:00+0100",
+        "arrivalTimestamp": 1793552220,
+        "departure": "2026-11-01T17:58:00+0100",
+        "departureTimestamp": 1793552280,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721414",
+         "name": "Erstein",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.423169,
+          "y": 7.638519
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721202",
+         "name": "Strasbourg",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.585103,
+          "y": 7.735141
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T18:10:00+0100",
+        "arrivalTimestamp": 1793553000,
+        "departure": null,
+        "departureTimestamp": null,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721202",
+         "name": "Strasbourg",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.585103,
+          "y": 7.735141
+         },
+         "distance": null
+        }
+       }
+      ],
+      "capacity1st": null,
+      "capacity2nd": null
+     },
+     "walk": null,
+     "departure": {
+      "station": {
+       "id": "8500010",
+       "name": "Basel SBB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.547413,
+        "y": 7.58956
+       },
+       "distance": null
+      },
+      "arrival": null,
+      "arrivalTimestamp": null,
+      "departure": "2026-11-01T16:39:00+0100",
+      "departureTimestamp": 1793547540,
+      "delay": null,
+      "platform": "31",
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8500010",
+       "name": "Basel SBB",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 47.547413,
+        "y": 7.58956
+       },
+       "distance": null
+      }
+     },
+     "arrival": {
+      "station": {
+       "id": "8721202",
+       "name": "Strasbourg",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 48.585103,
+        "y": 7.735141
+       },
+       "distance": null
+      },
+      "arrival": "2026-11-01T18:10:00+0100",
+      "arrivalTimestamp": 1793553000,
+      "departure": null,
+      "departureTimestamp": null,
+      "delay": null,
+      "platform": null,
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8721202",
+       "name": "Strasbourg",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 48.585103,
+        "y": 7.735141
+       },
+       "distance": null
+      }
+     }
+    },
+    {
+     "journey": {
+      "name": "830940",
+      "category": "TER",
+      "subcategory": null,
+      "categoryCode": null,
+      "number": "P34",
+      "operator": "SNCF",
+      "to": "Sarreguemines",
+      "passList": [
+       {
+        "station": {
+         "id": "8721202",
+         "name": "Strasbourg",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.585103,
+          "y": 7.735141
+         },
+         "distance": null
+        },
+        "arrival": null,
+        "arrivalTimestamp": null,
+        "departure": "2026-11-01T18:34:00+0100",
+        "departureTimestamp": 1793554440,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721202",
+         "name": "Strasbourg",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.585103,
+          "y": 7.735141
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721214",
+         "name": "Mommenheim",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.755848,
+          "y": 7.641456
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T18:47:00+0100",
+        "arrivalTimestamp": 1793555220,
+        "departure": "2026-11-01T18:48:00+0100",
+        "departureTimestamp": 1793555280,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721214",
+         "name": "Mommenheim",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.755848,
+          "y": 7.641456
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721316",
+         "name": "Obermodern",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.84234,
+          "y": 7.546881
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T18:57:00+0100",
+        "arrivalTimestamp": 1793555820,
+        "departure": "2026-11-01T18:58:00+0100",
+        "departureTimestamp": 1793555880,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721316",
+         "name": "Obermodern",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.84234,
+          "y": 7.546881
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721378",
+         "name": "Ingwiller",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.872642,
+          "y": 7.476669
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T19:03:00+0100",
+        "arrivalTimestamp": 1793556180,
+        "departure": "2026-11-01T19:04:00+0100",
+        "departureTimestamp": 1793556240,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721378",
+         "name": "Ingwiller",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.872642,
+          "y": 7.476669
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721374",
+         "name": "Wingen-sur-Moder",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.92036,
+          "y": 7.38187
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T19:11:00+0100",
+        "arrivalTimestamp": 1793556660,
+        "departure": "2026-11-01T19:11:00+0100",
+        "departureTimestamp": 1793556660,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721374",
+         "name": "Wingen-sur-Moder",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.92036,
+          "y": 7.38187
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721569",
+         "name": "Tieffenbach - Struth",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.906363,
+          "y": 7.255396
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T19:19:00+0100",
+        "arrivalTimestamp": 1793557140,
+        "departure": "2026-11-01T19:20:00+0100",
+        "departureTimestamp": 1793557200,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721569",
+         "name": "Tieffenbach - Struth",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.906363,
+          "y": 7.255396
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721566",
+         "name": "Diemeringen",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.940615,
+          "y": 7.184833
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T19:26:00+0100",
+        "arrivalTimestamp": 1793557560,
+        "departure": "2026-11-01T19:26:00+0100",
+        "departureTimestamp": 1793557560,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721566",
+         "name": "Diemeringen",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 48.940615,
+          "y": 7.184833
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8721563",
+         "name": "Oermingen",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.00031,
+          "y": 7.131806
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T19:33:00+0100",
+        "arrivalTimestamp": 1793557980,
+        "departure": "2026-11-01T19:34:00+0100",
+        "departureTimestamp": 1793558040,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8721563",
+         "name": "Oermingen",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.00031,
+          "y": 7.131806
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8719366",
+         "name": "Kalhausen",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.035169,
+          "y": 7.125194
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T19:37:00+0100",
+        "arrivalTimestamp": 1793558220,
+        "departure": "2026-11-01T19:38:00+0100",
+        "departureTimestamp": 1793558280,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8719366",
+         "name": "Kalhausen",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.035169,
+          "y": 7.125194
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8719361",
+         "name": "Sarreguemines",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.107255,
+          "y": 7.067882
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T19:50:00+0100",
+        "arrivalTimestamp": 1793559000,
+        "departure": null,
+        "departureTimestamp": null,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8719361",
+         "name": "Sarreguemines",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.107255,
+          "y": 7.067882
+         },
+         "distance": null
+        }
+       }
+      ],
+      "capacity1st": null,
+      "capacity2nd": null
+     },
+     "walk": null,
+     "departure": {
+      "station": {
+       "id": "8721202",
+       "name": "Strasbourg",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 48.585103,
+        "y": 7.735141
+       },
+       "distance": null
+      },
+      "arrival": null,
+      "arrivalTimestamp": null,
+      "departure": "2026-11-01T18:34:00+0100",
+      "departureTimestamp": 1793554440,
+      "delay": null,
+      "platform": null,
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8721202",
+       "name": "Strasbourg",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 48.585103,
+        "y": 7.735141
+       },
+       "distance": null
+      }
+     },
+     "arrival": {
+      "station": {
+       "id": "8719361",
+       "name": "Sarreguemines",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 49.107255,
+        "y": 7.067882
+       },
+       "distance": null
+      },
+      "arrival": "2026-11-01T19:50:00+0100",
+      "arrivalTimestamp": 1793559000,
+      "departure": null,
+      "departureTimestamp": null,
+      "delay": null,
+      "platform": null,
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8719361",
+       "name": "Sarreguemines",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 49.107255,
+        "y": 7.067882
+       },
+       "distance": null
+      }
+     }
+    },
+    {
+     "journey": {
+      "name": "087254",
+      "category": "T",
+      "subcategory": null,
+      "categoryCode": null,
+      "number": "34",
+      "operator": "SNCF",
+      "to": "Saarbrücken Hbf",
+      "passList": [
+       {
+        "station": {
+         "id": "8719361",
+         "name": "Sarreguemines",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.107255,
+          "y": 7.067882
+         },
+         "distance": null
+        },
+        "arrival": null,
+        "arrivalTimestamp": null,
+        "departure": "2026-11-01T20:16:00+0100",
+        "departureTimestamp": 1793560560,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8719361",
+         "name": "Sarreguemines",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.107255,
+          "y": 7.067882
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8025391",
+         "name": "Saarbrücken Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.241068,
+          "y": 6.991022
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T20:45:00+0100",
+        "arrivalTimestamp": 1793562300,
+        "departure": null,
+        "departureTimestamp": null,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8025391",
+         "name": "Saarbrücken Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.241068,
+          "y": 6.991022
+         },
+         "distance": null
+        }
+       }
+      ],
+      "capacity1st": null,
+      "capacity2nd": null
+     },
+     "walk": null,
+     "departure": {
+      "station": {
+       "id": "8719361",
+       "name": "Sarreguemines",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 49.107255,
+        "y": 7.067882
+       },
+       "distance": null
+      },
+      "arrival": null,
+      "arrivalTimestamp": null,
+      "departure": "2026-11-01T20:16:00+0100",
+      "departureTimestamp": 1793560560,
+      "delay": null,
+      "platform": null,
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8719361",
+       "name": "Sarreguemines",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 49.107255,
+        "y": 7.067882
+       },
+       "distance": null
+      }
+     },
+     "arrival": {
+      "station": {
+       "id": "8025391",
+       "name": "Saarbrücken Hbf",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 49.241068,
+        "y": 6.991022
+       },
+       "distance": null
+      },
+      "arrival": "2026-11-01T20:45:00+0100",
+      "arrivalTimestamp": 1793562300,
+      "departure": null,
+      "departureTimestamp": null,
+      "delay": null,
+      "platform": null,
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8025391",
+       "name": "Saarbrücken Hbf",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 49.241068,
+        "y": 6.991022
+       },
+       "distance": null
+      }
+     }
+    },
+    {
+     "journey": {
+      "name": "009557",
+      "category": "ICE",
+      "subcategory": null,
+      "categoryCode": null,
+      "number": "651B",
+      "operator": "SNCF",
+      "to": "Frankfurt (Main) Hbf",
+      "passList": [
+       {
+        "station": {
+         "id": "8025391",
+         "name": "Saarbrücken Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.241068,
+          "y": 6.991022
+         },
+         "distance": null
+        },
+        "arrival": null,
+        "arrivalTimestamp": null,
+        "departure": "2026-11-01T20:59:00+0100",
+        "departureTimestamp": 1793563140,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8025391",
+         "name": "Saarbrücken Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.241068,
+          "y": 6.991022
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8019698",
+         "name": "Kaiserslautern Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.43586,
+          "y": 7.768631
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T21:35:00+0100",
+        "arrivalTimestamp": 1793565300,
+        "departure": "2026-11-01T21:37:00+0100",
+        "departureTimestamp": 1793565420,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8019698",
+         "name": "Kaiserslautern Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.43586,
+          "y": 7.768631
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8014008",
+         "name": "Mannheim Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.479403,
+          "y": 8.469604
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T22:16:00+0100",
+        "arrivalTimestamp": 1793567760,
+        "departure": "2026-11-01T22:19:00+0100",
+        "departureTimestamp": 1793567940,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8014008",
+         "name": "Mannheim Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 49.479403,
+          "y": 8.469604
+         },
+         "distance": null
+        }
+       },
+       {
+        "station": {
+         "id": "8011068",
+         "name": "Frankfurt (Main) Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 50.106683,
+          "y": 8.662832
+         },
+         "distance": null
+        },
+        "arrival": "2026-11-01T23:03:00+0100",
+        "arrivalTimestamp": 1793570580,
+        "departure": null,
+        "departureTimestamp": null,
+        "delay": null,
+        "platform": null,
+        "prognosis": {
+         "platform": null,
+         "arrival": null,
+         "departure": null,
+         "capacity1st": null,
+         "capacity2nd": null
+        },
+        "realtimeAvailability": null,
+        "location": {
+         "id": "8011068",
+         "name": "Frankfurt (Main) Hbf",
+         "score": null,
+         "coordinate": {
+          "type": "WGS84",
+          "x": 50.106683,
+          "y": 8.662832
+         },
+         "distance": null
+        }
+       }
+      ],
+      "capacity1st": null,
+      "capacity2nd": null
+     },
+     "walk": null,
+     "departure": {
+      "station": {
+       "id": "8025391",
+       "name": "Saarbrücken Hbf",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 49.241068,
+        "y": 6.991022
+       },
+       "distance": null
+      },
+      "arrival": null,
+      "arrivalTimestamp": null,
+      "departure": "2026-11-01T20:59:00+0100",
+      "departureTimestamp": 1793563140,
+      "delay": null,
+      "platform": null,
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8025391",
+       "name": "Saarbrücken Hbf",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 49.241068,
+        "y": 6.991022
+       },
+       "distance": null
+      }
+     },
+     "arrival": {
+      "station": {
+       "id": "8011068",
+       "name": "Frankfurt (Main) Hbf",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 50.106683,
+        "y": 8.662832
+       },
+       "distance": null
+      },
+      "arrival": "2026-11-01T23:03:00+0100",
+      "arrivalTimestamp": 1793570580,
+      "departure": null,
+      "departureTimestamp": null,
+      "delay": null,
+      "platform": null,
+      "prognosis": {
+       "platform": null,
+       "arrival": null,
+       "departure": null,
+       "capacity1st": null,
+       "capacity2nd": null
+      },
+      "realtimeAvailability": null,
+      "location": {
+       "id": "8011068",
+       "name": "Frankfurt (Main) Hbf",
+       "score": null,
+       "coordinate": {
+        "type": "WGS84",
+        "x": 50.106683,
+        "y": 8.662832
+       },
+       "distance": null
+      }
+     }
+    }
+   ]
+  }
+ ],
+ "from": {
+  "id": "8503000",
+  "name": "Zürich HB",
+  "score": null,
+  "coordinate": {
+   "type": "WGS84",
+   "x": 47.378176,
+   "y": 8.540212
+  },
+  "distance": null
+ },
+ "to": {
+  "id": "8011068",
+  "name": "Frankfurt (Main) Hbf",
+  "score": null,
+  "coordinate": {
+   "type": "WGS84",
+   "x": 50.106683,
+   "y": 8.662832
+  },
+  "distance": null
+ },
+ "stations": {
+  "from": [
+   {
+    "id": "8503000",
+    "name": "Zürich HB",
+    "score": null,
+    "coordinate": {
+     "type": "WGS84",
+     "x": 47.378176,
+     "y": 8.540212
+    },
+    "distance": null
+   }
+  ],
+  "to": [
+   {
+    "id": "8011068",
+    "name": "Frankfurt (Main) Hbf",
+    "score": null,
+    "coordinate": {
+     "type": "WGS84",
+     "x": 50.106683,
+     "y": 8.662832
+    },
+    "distance": null
+   }
+  ]
+ }
+}

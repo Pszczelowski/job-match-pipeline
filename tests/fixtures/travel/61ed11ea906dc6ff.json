@@ -1,0 +1,40 @@
+{
+ "code": "Ok",
+ "routes": [
+  {
+   "legs": [
+    {
+     "steps": [],
+     "weight": 18055.4,
+     "summary": "",
+     "duration": 14778.7,
+     "distance": 369894.3
+    }
+   ],
+   "weight_name": "routability",
+   "weight": 18055.4,
+   "duration": 14778.7,
+   "distance": 369894.3
+  }
+ ],
+ "waypoints": [
+  {
+   "hint": "GZTKgP___38GAAAABgAAAAcAAADDAAAAsvQjQAAAAAD0eTJAig6iQgYAAAAGAAAABwAAAMMAAADLKQEAvUKCAI0p1QKSQIIAbijVAgIAvwkAAAAA",
+   "location": [
+    8.50000,
+    47.50000
+   ],
+   "name": "",
+   "distance": 52.58396437
+  },
+  {
+   "hint": "xxXNgf___38PAAAAEgAAADYAAAAZAAAADeKGQZbuU0CILm9CiuzdQQ8AAAASAAAANgAAABkAAADLKQEAvTKEAEuN_AIuL4QAOJH8AgYA_w4AAAAA",
+   "location": [
+    8.663741,
+    50.105675
+   ],
+   "name": "Mannheimer Straße",
+   "distance": 129.3846508
+  }
+ ]
+}

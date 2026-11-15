@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block title %}Missing descriptions - Recruitment{% endblock %}
+{% block content %}
+<h1>Missing descriptions</h1>
+<p>These jobs would be in the top 10 by their title alone, but the posting text is missing, so they are not ranked and no CV or letter is written until you add the text.
+  Open the posting, copy the whole text (tasks and requirements included) and paste it on the job's page. A job stays here until its text arrives, it closes, or you reject it.</p>
+{% if not rows %}
+<p class="empty">No job is waiting for a description.</p>
+{% else %}
+<div class="tablewrap">
+<table class="stack">
+  <thead><tr><th>Place</th><th>Title</th><th>Company</th><th>Where</th><th>Waiting</th><th>Posting</th><th>Tried</th><th></th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td class="n" data-label="Place">{{ r.place }}</td>
+    <td class="title"><a href="/jobs/{{ r.id }}">{{ r.title }}</a></td>
+    <td data-label="Company">{{ r.company }}</td>
+    <td data-label="Where">{{ r.locations|join(", ") }}</td>
+    <td class="n" data-label="Waiting">{% if r.days is not none %}{{ r.days }} day{{ "" if r.days == 1 else "s" }}{% else %}-{% endif %}</td>
+    <td data-label="Posting">{% for l in r.links %}<a href="{{ l }}" target="_blank" rel="noopener noreferrer">link {{ loop.index }}</a> {% else %}no link{% endfor %}</td>
+    <td data-label="Tried">{% for t in r.tiers %}{{ t.tier }} {{ t.source }}: {{ t.status }}{% if not loop.last %}; {% endif %}{% else %}nothing yet{% endfor %}</td>
+    <td class="n"><a class="button" href="/jobs/{{ r.id }}/description">Add the text</a></td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% endif %}
+
+<h2>Bookmarklet: copy the text of the page you are reading</h2>
+<p>Drag this link to your bookmarks bar: <a class="button" href="{{ bookmarklet }}">Copy job text</a>.
+  On the posting page (for example on LinkedIn) click it: it copies the selected text, or else the description, to the clipboard.
+  Then press Ctrl+V in the box on the job's page here and save. It sends nothing anywhere; the page you read never talks to this app.
+  If the bookmark does not work on a page, select the text and press Ctrl+C instead.</p>
+<p>Or copy the bookmarklet code and make a bookmark by hand (name: Copy job text, address: the text below):</p>
+<p><code class="nolink">{{ bookmarklet }}</code></p>
+{% endblock %}

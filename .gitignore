@@ -1,0 +1,41 @@
+# Secrets and private config (goal.md 7.4)
+.env
+config.yaml
+compose.env
+# The Claude login line of the llm service and its home folder (v0.78.0)
+llm.env
+llm-home/
+# Copies and backups of the secret files (v0.79.1); the *.example templates stay tracked
+.env.*
+*.env
+*.env.*
+config.yaml.*
+*.bak
+*.pem
+!*.example
+
+# Data that must never be committed
+*.db
+*.db-wal
+*.db-shm
+*.db-journal
+# hand-made copies such as jobs.db.before-revoice (and their -wal/-shm files)
+*.db.*
+*.sqlite
+backups/
+logs/
+*.log
+exchange/
+output/
+
+# Agent worktrees (Claude Code); never committed
+.claude/worktrees/
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Real values for the public-copy build (scripts/public_copy.local.example.yaml); never commit
+scripts/public_copy.local.yaml

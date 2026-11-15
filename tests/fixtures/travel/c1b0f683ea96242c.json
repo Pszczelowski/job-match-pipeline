@@ -1,0 +1,40 @@
+{
+ "code": "Ok",
+ "routes": [
+  {
+   "legs": [
+    {
+     "steps": [],
+     "weight": 1281.5,
+     "summary": "",
+     "duration": 1260.1,
+     "distance": 22122.5
+    }
+   ],
+   "weight_name": "routability",
+   "weight": 1281.5,
+   "duration": 1260.1,
+   "distance": 22122.5
+  }
+ ],
+ "waypoints": [
+  {
+   "hint": "GZTKgP___38GAAAABgAAAAcAAADDAAAAsvQjQAAAAAD0eTJAig6iQgYAAAAGAAAABwAAAMMAAADLKQEAvUKCAI0p1QKSQIIAbijVAgIAvwkAAAAA",
+   "location": [
+    8.50000,
+    47.50000
+   ],
+   "name": "",
+   "distance": 52.58396437
+  },
+  {
+   "hint": "ueIsiRkfJpMAAAAAOAAAAAAAAAA2AAAAAAAAAFDjO0EAAAAA4CE4QQAAAAAcAAAAAAAAABwAAADLKQEAp1GCAArv0gIyUIIABO_SAgAAXwEAAAAA",
+   "location": [
+    8.540583,
+    47.378186
+   ],
+   "name": "",
+   "distance": 28.17768488
+  }
+ ]
+}

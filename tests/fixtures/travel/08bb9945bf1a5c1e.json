@@ -1,0 +1,53 @@
+{
+ "connections": [],
+ "from": {
+  "id": "8503000",
+  "name": "Zürich HB",
+  "score": null,
+  "coordinate": {
+   "type": "WGS84",
+   "x": 47.378176,
+   "y": 8.540212
+  },
+  "distance": null
+ },
+ "to": {
+  "id": "8503000",
+  "name": "Zürich HB",
+  "score": null,
+  "coordinate": {
+   "type": "WGS84",
+   "x": 47.378176,
+   "y": 8.540212
+  },
+  "distance": null
+ },
+ "stations": {
+  "from": [
+   {
+    "id": "8503000",
+    "name": "Zürich HB",
+    "score": null,
+    "coordinate": {
+     "type": "WGS84",
+     "x": 47.378176,
+     "y": 8.540212
+    },
+    "distance": null
+   }
+  ],
+  "to": [
+   {
+    "id": "8503000",
+    "name": "Zürich HB",
+    "score": null,
+    "coordinate": {
+     "type": "WGS84",
+     "x": 47.378176,
+     "y": 8.540212
+    },
+    "distance": null
+   }
+  ]
+ }
+}

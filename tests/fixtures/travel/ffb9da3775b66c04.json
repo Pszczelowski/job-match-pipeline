@@ -1,0 +1,124 @@
+{
+ "stations": [
+  {
+   "id": "8503000",
+   "name": "Zürich HB",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.378176,
+    "y": 8.540212
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8591442",
+   "name": "Zürich, Zoo",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.38157,
+    "y": 8.571554
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8591367",
+   "name": "Zürich, Sihlpost/HB",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.376096,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8591368",
+   "name": "Zürich, Sihlquai/HB",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.379873,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8591190",
+   "name": "Zürich, Heuried",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.36941,
+    "y": 8.506354
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8591176",
+   "name": "Zürich, Hardhof",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.396349,
+    "y": 8.49747
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8591191",
+   "name": "Zürich, Himmeri",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.419877,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8591427",
+   "name": "Zürich, Werd",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.372324,
+    "y": 8.526845
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8503010",
+   "name": "Zürich Enge",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.364098,
+    "y": 8.50000
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8591824",
+   "name": "Zürich, Binz",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.362967,
+    "y": 8.51832
+   },
+   "distance": null,
+   "icon": "bus"
+  }
+ ]
+}

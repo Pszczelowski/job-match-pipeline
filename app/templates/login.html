@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Log in - Recruitment{% endblock %}
+{% block nav %}{% endblock %}
+{% block shellclass %} bare{% endblock %}
+{% block content %}
+<h1>Log in</h1>
+{% if message %}<p class="notice refused">{{ message }}</p>{% endif %}
+<form method="post" action="/login" class="confirm">
+  <input type="hidden" name="csrf" value="{{ csrf('login') }}">
+  <input type="hidden" name="next" value="{{ nxt }}">
+  <p><label for="username">User name</label><br>
+    <input type="text" id="username" name="username" autocomplete="username" autocapitalize="none" size="30" required></p>
+  <p><label for="password">Password</label><br>
+    <input type="password" id="password" name="password" autocomplete="current-password" size="30" required></p>
+  <p><label><input type="checkbox" name="stay" value="on"> Stay logged in on this device for {{ stay_days }} days</label></p>
+  <p><button type="submit">Log in</button></p>
+</form>
+{% endblock %}

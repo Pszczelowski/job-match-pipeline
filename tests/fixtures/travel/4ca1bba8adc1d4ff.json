@@ -1,0 +1,124 @@
+{
+ "stations": [
+  {
+   "id": "8501008",
+   "name": "Genève",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.210212,
+    "y": 6.142455
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8587057",
+   "name": "Genève, gare Cornavin",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.209733,
+    "y": 6.142437
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8587387",
+   "name": "Genève, Bel-Air",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.204728,
+    "y": 6.143048
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8516272",
+   "name": "Genève-Champel",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.192193,
+    "y": 6.153496
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8516273",
+   "name": "Genève-Eaux-Vives",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.201446,
+    "y": 6.166566
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8587061",
+   "name": "Genève, Rive",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.201862,
+    "y": 6.152813
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8592812",
+   "name": "Genève, Coutance",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.207445,
+    "y": 6.142195
+   },
+   "distance": null,
+   "icon": "tram"
+  },
+  {
+   "id": "8501026",
+   "name": "Genève-Aéroport",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.232537,
+    "y": 6.111984
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8516283",
+   "name": "Genève-Sécheron",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.222438,
+    "y": 6.144557
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8587062",
+   "name": "Genève, Jonction",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 46.200787,
+    "y": 6.12969
+   },
+   "distance": null,
+   "icon": "tram"
+  }
+ ]
+}

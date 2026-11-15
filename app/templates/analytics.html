@@ -1,0 +1,129 @@
+{% extends "base.html" %}
+{% from "_bars.html" import bar, counts, chart %}
+{% block title %}Analytics - Recruitment{% endblock %}
+{% block content %}
+<h1>Analytics</h1>
+<p class="meta">Read-only numbers from the database (goal.md 5.8). All dates are UTC. The bar is the share of the largest value in its table; the number is always printed beside it. Archived jobs that were restored are not counted (the restored job is a working job again).</p>
+
+<section class="group">
+<h2>Funnel by status</h2>
+{% set f = a.funnel %}
+{% if not f.working_total and not f.archived_total %}<p class="empty">nothing yet</p>{% else %}
+<h3>Open jobs ({{ f.working_total }})</h3>
+{{ chart(charts, "chart-funnel-open", "Open jobs per status", "l") }}
+{{ counts(f.working, "Status") }}
+<h3>Archived jobs by stage ({{ f.archived_total }})</h3>
+<p class="meta">filter = rejected by a hard filter, user = rejected by you, not_selected = rejected at the selection stage.</p>
+{{ chart(charts, "chart-funnel-archived", "Archived jobs per stage", "s") }}
+{{ counts(f.archived, "Stage") }}
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Rejections from the archive</h2>
+{% set r = a.rejections %}
+{% if not r.total %}<p class="empty">nothing yet</p>{% else %}
+<h3>By reason code</h3>{{ chart(charts, "chart-rej-reason", "Rejections by reason code", "m") }}{{ counts(r.reason, "Reason", "Rejected") }}
+<h3>By source</h3>{{ chart(charts, "chart-rej-source", "Rejections by source", "s") }}{{ counts(r.source, "Source", "Rejected") }}
+<h3>By company (top 10)</h3>{{ chart(charts, "chart-rej-company", "Rejections by company", "m") }}{{ counts(r.company, "Company", "Rejected") }}
+<h3>By ISO week (last 12)</h3>{{ chart(charts, "chart-rej-week", "Rejections per ISO week, last 12 weeks", "m") }}{{ counts(r.week, "Week", "Rejected") }}
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Jobs per source per day</h2>
+<p class="meta">Last 14 days, by the day a job was first seen, per source of its first sighting; open and archived jobs.</p>
+{% set d = a.per_day %}
+{% if not d.total %}<p class="empty">nothing yet</p>{% else %}
+{{ chart(charts, "chart-per-day", "Jobs per source per day, last 14 days", "l") }}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="bars grid">
+  <thead><tr><th>Source</th>{% for day in d.days %}<th class="n">{{ day[5:] }}</th>{% endfor %}<th>Total</th><th></th></tr></thead>
+  <tbody>
+  {% for row in d.rows %}<tr><td>{{ row.label }}</td>{% for n in row.days %}<td class="n">{{ n if n else "-" }}</td>{% endfor %}<td class="n">{{ row.count }}</td><td class="barcell">{{ bar(row.pct) }}</td></tr>{% endfor %}
+  <tr><th>All sources</th>{% for n in d.totals %}<td class="n">{{ n if n else "-" }}</td>{% endfor %}<td class="n">{{ d.total }}</td><td></td></tr>
+  </tbody>
+</table></div>
+</details>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Average score by source</h2>
+<p class="meta">The latest score of each job; open jobs and archived jobs that kept a score. The bar is out of 100.</p>
+{% set s = a.score_source %}
+{% if not s.rows %}<p class="empty">nothing yet</p>{% else %}
+{{ chart(charts, "chart-score-source", "Average score by source", "m") }}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="small bars">
+  <thead><tr><th>Source</th><th>Average</th><th>Scored jobs</th><th></th></tr></thead>
+  <tbody>{% for row in s.rows %}<tr><td>{{ row.label }}</td><td class="n">{{ row.average }}</td><td class="n">{{ row.count }}</td><td class="barcell">{{ bar(row.pct) }}</td></tr>{% endfor %}</tbody>
+</table></div>
+</details>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Score band and outcome</h2>
+{% set b = a.bands %}
+<p class="meta">Scored jobs by band (low below {{ b.low_below }}, high from {{ b.high_from }}) and by what became of them. "archived" = rejected by the filters or by you after a score. The status counted is the current one.</p>
+{% if not b.total %}<p class="empty">nothing yet</p>{% else %}
+{{ chart(charts, "chart-band-outcome", "Scored jobs by band and outcome", "s") }}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="grid">
+  <thead><tr><th>Band</th>{% for g in b.groups %}<th class="n">{{ g }}</th>{% endfor %}<th class="n">Total</th></tr></thead>
+  <tbody>{% for row in b.rows %}<tr><td><span class="chip band-{{ row.band }}">{{ row.band|upper }}</span></td>{% for n in row.cells %}<td class="n">{{ n }}</td>{% endfor %}<td class="n">{{ row.total }}</td></tr>{% endfor %}</tbody>
+</table></div>
+</details>
+{% endif %}
+<h3>Response rate</h3>
+{% if not b.applied %}<p class="empty">no applications yet</p>{% else %}
+<p>Response rate = (interview + offer + rejected by employer) / applied. "Applied" counts every job that has reached the application or gone further (applied, interview, offer, rejected, withdrawn). Overall: <strong>{{ b.rate }}</strong> ({{ b.answered }} of {{ b.applied }}).</p>
+{{ chart(charts, "chart-response-rate", "Response rate per band", "s") }}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="small">
+  <thead><tr><th>Band</th><th>Applied</th><th>Answered</th><th>Rate</th></tr></thead>
+  <tbody>{% for row in b.rows %}<tr><td>{{ row.band }}</td><td class="n">{{ row.applied }}</td><td class="n">{{ row.answered }}</td><td class="n">{{ row.rate or "no applications yet" }}</td></tr>{% endfor %}</tbody>
+</table></div>
+</details>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Time from posting to application</h2>
+{% set t = a.apply %}
+{% if not t.n %}<p class="empty">no applications yet</p>{% else %}
+<div class="tiles"><div class="tile"><span class="num">{{ t.median }}</span><span class="cap">median days</span></div><div class="tile"><span class="num">{{ t.shortest }}</span><span class="cap">shortest</span></div><div class="tile"><span class="num">{{ t.longest }}</span><span class="cap">longest</span></div></div>
+<p>Median <strong>{{ t.median }}</strong> days, shortest {{ t.shortest }}, longest {{ t.longest }} (from {{ t.n }} application{{ "" if t.n == 1 else "s" }}).
+{% if t.from_first_seen %}For {{ t.from_first_seen }} of them the job page gave no posting date, so the day the job was first seen is used.{% endif %}</p>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Adapter health, last 14 days</h2>
+<p class="meta">Per source adapter and day: runs that read fine / runs that failed. "-" = no run.</p>
+{% set h = a.adapters %}
+{% if not h.rows %}<p class="empty">nothing yet</p>{% else %}
+{{ chart(charts, "chart-adapters", "Adapter runs per day, ok and failed, last 14 days", "m") }}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="bars grid">
+  <thead><tr><th>Adapter</th>{% for day in h.days %}<th class="n">{{ day[5:] }}</th>{% endfor %}<th>Ok</th><th>Failed</th><th>Ok share</th><th>Failed share</th></tr></thead>
+  <tbody>
+  {% for row in h.rows %}<tr><td>{{ row.label }}</td>{% for ok, failed in row.days %}<td class="n">{% if ok or failed %}{{ ok }}/{{ failed }}{% else %}-{% endif %}</td>{% endfor %}<td class="n">{{ row.ok }}</td><td class="n">{{ row.failed }}</td><td class="barcell">{{ bar(row.ok_pct, "good") }}</td><td class="barcell">{{ bar(row.failed_pct, "bad") }}</td></tr>{% endfor %}
+  </tbody>
+</table></div>
+</details>
+{% endif %}
+</section>
+
+<section class="group">
+<h2>Not available yet</h2>
+<ul>
+  <li>The time until an employer answers: the database records only the day you changed a status, not the day the employer replied.</li>
+  <li>The response rate as a count of replies over time: it uses the current status of each job (a job at "interview" counts as answered), because no log of employer replies exists.</li>
+</ul>
+</section>
+<script type="application/json" id="chart-data">{{ charts|tojson }}</script>
+<script src="/static/vendor/chart.umd.min.js" defer></script>
+<script src="/static/charts.js" defer></script>
+{% endblock %}

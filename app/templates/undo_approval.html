@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Take back approval, job {{ j.id }} - Recruitment{% endblock %}
+{% block content %}
+<p><a href="/jobs/{{ j.id }}">&larr; Back to the job</a></p>
+<h1>Take back the approval?</h1>
+<p><strong>{{ j.title }}</strong><br><span class="where">{{ j.company }} &middot; job {{ j.id }} &middot; status {{ j.status }}</span></p>
+{% if not chosen %}
+<p class="notice refused">There is no approved document to take back for this choice. Nothing was changed.</p>
+{% else %}
+<p>You are about to take back the approval of: <strong>{{ chosen|join(" and ") }}</strong>.</p>
+<p>Each of these documents becomes a draft again and can be changed by a later results file. Its approved copy is removed from the approved folder;
+  the original PDF is kept.
+  {% if j.status == "approved" %}The job is <code>approved</code> now, so it goes back to the status it had before the approval.
+  {% elif further %}The job is <code>{{ j.status }}</code> and stays so: this only unfreezes the documents.
+  {% else %}The status of the job does not change.{% endif %}
+  Nothing is sent to an employer. Same as <code>python -m app approve-document --job {{ j.id }} --undo</code>.</p>
+<form method="post" action="/jobs/{{ j.id }}/undo-approval" class="confirm">
+  <input type="hidden" name="csrf" value="{{ csrf('undo-approval:' ~ j.id) }}">
+  <input type="hidden" name="next" value="{{ nxt }}">
+  <input type="hidden" name="kind" value="{{ kind }}">
+  <p><button type="submit" name="confirm" value="yes" class="reject">Yes, take back the approval</button>
+    <a class="button" href="/jobs/{{ j.id }}">Cancel</a></p>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,124 @@
+{
+ "stations": [
+  {
+   "id": "8506000",
+   "name": "Winterthur",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.500333,
+    "y": 8.723818
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8506899",
+   "name": "Winterthur, Hauptbahnhof",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.499732,
+    "y": 8.723701
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8580521",
+   "name": "Winterthur, Stadthaus",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.500552,
+    "y": 8.730708
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8580472",
+   "name": "Winterthur, Schmidgasse",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.500024,
+    "y": 8.727295
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8506001",
+   "name": "Winterthur Grüze",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.498755,
+    "y": 8.751055
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8580458",
+   "name": "Winterthur, Gewerbeschule",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.498033,
+    "y": 8.732756
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590945",
+   "name": "Winterthur, Gaswerk",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.493985,
+    "y": 8.710775
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8580430",
+   "name": "Winterthur, Technikum",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.49779,
+    "y": 8.729334
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8573656",
+   "name": "Winterthur, Obertor",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.500545,
+    "y": 8.73299
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8576180",
+   "name": "Winterthur, Loki",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.496121,
+    "y": 8.71417
+   },
+   "distance": null,
+   "icon": "bus"
+  }
+ ]
+}

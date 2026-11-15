@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block title %}Add the description of job {{ j.id }} - Recruitment{% endblock %}
+{% block content %}
+<p><a href="/missing">&larr; Missing descriptions</a> &middot; <a href="/jobs/{{ j.id }}">The job</a></p>
+<h1>Add the description</h1>
+<p><strong>{{ j.title }}</strong><br><span class="where">{{ j.company }} &middot; job {{ j.id }} &middot; status {{ j.status }}</span></p>
+{% for level, line in lines %}<p class="notice {{ level }}">{{ line }}</p>{% endfor %}
+{% if links %}<p>Posting: {% for l in links %}<a href="{{ l }}" target="_blank" rel="noopener noreferrer">link {{ loop.index }}</a> {% endfor %}</p>{% endif %}
+{% if not j.description_missing %}
+<p class="notice refused">This job already has a description. Nothing can be pasted here.</p>
+{% else %}
+<p>Paste the whole posting: at least 500 characters, ideally with the tasks part and the requirements part (without them it is stored with a warning). The job is scored again in the next batch.</p>
+<form method="post" action="/jobs/{{ j.id }}/description" class="confirm">
+  <input type="hidden" name="csrf" value="{{ csrf('describe:' ~ j.id) }}">
+  <p><label for="text">Text of the posting</label><br>
+    <textarea id="text" name="text" rows="20" cols="90" autocomplete="off">{{ text }}</textarea></p>
+  <p><button type="submit">Save the description</button> <a class="button" href="/missing">Cancel</a></p>
+</form>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,42 @@
+# Keep private data and development files out of the image (and out of the build context).
+.git
+.gitignore
+.gitattributes
+.github
+.venv
+.claude
+!.claude/agents/scorer-cv.md
+!.claude/agents/letter-writer.md
+!.claude/agents/doc-reviewer.md
+.env
+.env.*
+compose.env
+llm.env
+llm-home
+config.yaml
+data
+backups
+exchange
+output
+logs
+reports
+docs
+tests
+scripts
+*.db
+*.db-wal
+*.db-shm
+*.log
+__pycache__
+*.pyc
+.pytest_cache
+.mypy_cache
+.ruff_cache
+# the two example CV PDFs are not used by the program (7 MB)
+profile/samples
+# the image holds no deployment files
+Dockerfile
+compose.yaml
+compose.env.example
+requirements-dev.txt
+pytest.ini

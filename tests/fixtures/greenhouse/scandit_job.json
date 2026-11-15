@@ -1,0 +1,36 @@
+{
+ "absolute_url": "https://www.scandit.com/careers/job-description/?gh_jid=7552679",
+ "internal_job_id": 3342543,
+ "location": {
+  "name": "Zurich"
+ },
+ "id": 7552679,
+ "updated_at": "2026-10-30T13:23:46-04:00",
+ "requisition_id": "P-25221",
+ "title": "Senior Machine Learning Engineer (Biometrics & Face Recognition)",
+ "company_name": "Scandit",
+ "first_published": "2026-01-21T07:43:05-05:00",
+ "language": "en",
+ "application_deadline": null,
+ "content": "&lt;p&gt;&lt;strong&gt;Imagine the What. Build the How.&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;Scandit gives people superpowers. Whether enabling delivery drivers to make quicker deliveries, matching a patient with their medication or allowing retailers to make store operations more efficient, our technology automates workflows and provides actionable insights to help businesses in a variety of industries. Join us, as we continue to expand, grow and innovate, and help take Scandit to the next level.&lt;/p&gt;\n&lt;p&gt;Banks, fintechs and regulated businesses need more than document scanning. They need to know the person holding the ID is real and is its rightful owner. As a Senior Machine Learning Engineer in our ID Capture team, you will build the machine learning behind that, centred on face recognition and face matching. You will also support our liveness and presentation attack detection work.&lt;/p&gt;\n&lt;p&gt;You will have real ownership of the architecture, data and benchmarks, and your models will run fully on device, on the phones our users already have, with no cloud round-trip.&lt;/p&gt;\n&lt;p&gt;If these challenges sound interesting to you, we&#39;d love to hear from you!&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;Our Approach To AI&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;AI is part of how we work. Scandit embraces AI-native engineering, where engineers direct agents to deliver customer outcomes, using the tools they choose. We want to know how you use them, where you’ve hit their limits, and how you keep improving human-agent collaboration. We take pride in our craft, and that means making sure what agents deliver meets our quality bar.&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;About the Role&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;You will drive our face-matching work for high-assurance identity verification. You will own models end to end and work closely with our C++ engineers to ship them on device, at scale, on millions of phones and scanners.&amp;nbsp;&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;What You Will Do&lt;/strong&gt;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;Design, train and evaluate models for face detection, face recognition and 1:1 face matching against ID document portraits&lt;/li&gt;\n&lt;li&gt;Support the team&#39;s work on liveness and presentation attack detection (PAD) against spoofs, replays and deepfakes&lt;/li&gt;\n&lt;li&gt;Define quality metrics, benchmarks and test sets that meet high-assurance and regulatory expectations&lt;/li&gt;\n&lt;li&gt;Own the full loop: data collection and labelling strategy, prototyping, training, evaluation, debugging and model integration&lt;/li&gt;\n&lt;li&gt;Optimise models for on-device inference with our C++ engineers (quantisation, pruning, mobile runtimes)&lt;/li&gt;\n&lt;li&gt;Track research in biometrics and face anti-spoofing, and turn it into product direction&lt;/li&gt;\n&lt;li&gt;Mentor engineers on ML practice&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;Our Tech Stack&lt;/strong&gt;&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;Python, PyTorch&lt;/li&gt;\n&lt;li&gt;ONNX&lt;/li&gt;\n&lt;li&gt;C++ on-device SDK&lt;/li&gt;\n&lt;li&gt;iOS / Android&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;Who You Are&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;We are looking for an experienced ML engineer who has shipped production models to real users and has worked hands-on with biometrics. You are comfortable owning ambiguous problems, moving fast and then iterating. You also work well with product, C++ and QA engineers.&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;5+ years as an ML engineer, with production models shipped to real users&lt;/li&gt;\n&lt;li&gt;Hands-on experience with biometrics: face recognition, face verification, liveness or PAD&lt;/li&gt;\n&lt;li&gt;Fluent in Python and at least one deep learning framework (PyTorch preferred)&lt;/li&gt;\n&lt;li&gt;Strong grasp of evaluation for security-sensitive systems: FAR/FRR, bias and fairness across demographics, adversarial robustness&lt;/li&gt;\n&lt;li&gt;Clear communicator who works well across disciplines&lt;/li&gt;\n&lt;li&gt;Eligible to work in the hiring location&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;Nice to have:&lt;/p&gt;\n&lt;ul&gt;\n&lt;li&gt;Knowledge of standards such as ISO/IEC 30107 (PAD), NIST FRTE/FATE or iBeta testing&lt;/li&gt;\n&lt;li&gt;Experience deploying models on mobile or edge (TFLite, ONNX Runtime, Core ML)&lt;/li&gt;\n&lt;li&gt;Working knowledge of C++&lt;/li&gt;\n&lt;/ul&gt;\n&lt;p&gt;&lt;strong&gt;What We Offer&lt;/strong&gt;&lt;/p&gt;&lt;p&gt;Here are some of the reasons people choose to build their career at Scandit:&lt;/p&gt;&lt;ul&gt;&lt;li&gt;Certified as a Great Place To Work for four years in a row&lt;/li&gt;&lt;li&gt;Rated 4/5 by our employees on Glassdoor&lt;/li&gt;&lt;li&gt;Access to Claude Cowork and Claude Code, plus a budget to experiment with other AI tools&lt;/li&gt;&lt;li&gt;Weekly “How to Use AI” sessions and internal AI Champions to help turn your ideas into reality&lt;/li&gt;&lt;li&gt;A share in our success through an individual equity plan&lt;/li&gt;&lt;li&gt;Office shutdown days, global team events and innovation hackathons&lt;/li&gt;&lt;li&gt;Your birthday off and much more&lt;/li&gt;&lt;/ul&gt;&lt;p&gt;Plus specific benefits depending on the location you are joining.&lt;/p&gt;\n\n\n&lt;p&gt;&lt;strong&gt;You could be the difference&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;At Scandit we strive to create an inclusive environment that empowers our employees. We believe that our products and services benefit from our diverse backgrounds and experiences and are proud to be a safe space for all.&lt;/p&gt;\n&lt;p&gt;All qualified applications will receive consideration for employment without regard to race, colour, nationality, religion, sexual orientation, gender, gender identity, age, physical [dis]ability or length of time spent unemployed.&lt;/p&gt;\n&lt;p&gt;&lt;strong&gt;Imagine the What. Build the How.&lt;/strong&gt;&lt;/p&gt;\n&lt;p&gt;&lt;em&gt;#LI-XX&lt;/em&gt;&lt;/p&gt;\n&lt;p&gt;&lt;em&gt;#engineering&lt;/em&gt;&lt;/p&gt;",
+ "departments": [
+  {
+   "id": 31151,
+   "name": "Engineering",
+   "child_ids": [],
+   "parent_id": null
+  }
+ ],
+ "offices": [
+  {
+   "id": 21337,
+   "name": "Zurich",
+   "location": "Zürich, Zürich, Switzerland",
+   "child_ids": [],
+   "parent_id": 87080
+  }
+ ],
+ "ai_disclaimer": null,
+ "include_ai_disclaimer": null,
+ "ai_opt_out_request_url": null
+}

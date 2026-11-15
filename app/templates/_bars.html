@@ -1,0 +1,14 @@
+{# Bars without inline style (the Content-Security-Policy forbids it): the width is the class w0 .. w100 in style.css. The number is always printed too. #}
+{% macro bar(p, kind="") %}<span class="bar {{ kind }}" aria-hidden="true"><i class="w{{ p }}"></i></span>{% endmacro %}
+{# A chart canvas (v0.89.0): drawn by static/charts.js from the JSON block of the page; only when `charts` holds the entry. Height class h-s, h-m or h-l. #}
+{% macro chart(charts, id, label, size="m") %}{% if id in charts %}<canvas class="chart h-{{ size }}" id="{{ id }}" role="img" aria-label="{{ label }}; numbers in the table below"></canvas>{% endif %}{% endmacro %}
+{% macro counts(rows, head, unit="Jobs") %}
+{% if not rows %}<p class="empty">nothing yet</p>{% else %}
+<details><summary>Show table</summary>
+<div class="tablewrap"><table class="small bars">
+  <thead><tr><th>{{ head }}</th><th>{{ unit }}</th><th></th></tr></thead>
+  <tbody>{% for r in rows %}<tr><td>{{ r.label }}</td><td class="n">{{ r.count }}</td><td class="barcell">{{ bar(r.pct) }}</td></tr>{% endfor %}</tbody>
+</table></div>
+</details>
+{% endif %}
+{% endmacro %}

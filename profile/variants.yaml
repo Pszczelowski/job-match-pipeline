@@ -1,0 +1,26 @@
+# Profile variants of the fictional demo persona (examples/persona/): a summary, a headline and lead themes per CV variant.
+
+variants:
+  resume:
+    label: "Business Analyst / tester / automation"
+    headline: null
+    summary: >-
+      I'm a BA who also tests and understands developers. Over the past ten years at places like Northwind,
+      Fabrikam, and Contoso, I've worked across requirements, testing, and process automation as
+      part of my responsibilities. I find the gaps between what was agreed and what got built, and I fix
+      them before they become someone else's problem. I can write the requirement, verify it, and script
+      away daily manual work. Senior stakeholders get plain language and developers get precise specs, so
+      both sides see fewer surprises.
+    lead_themes: [requirements, testing, automation, agile, stakeholders]
+    best_for: [Business Analyst, IT Business Analyst, IAM Business Analyst, Requirements Engineer, Automation Developer, Test roles]
+
+  resume_cs:
+    label: "Financial services analyst / SQL reporting"
+    headline: "Financial Services Analyst | SQL Reporting, Data Validation & Automation"
+    summary: >-
+      I turn complex financial data into clear reports and make daily work easier through automation. With
+      over 10 years at Northwind, Fabrikam, Contoso Fund Services, and Adventure Works, I bring experience in SQL,
+      problem solving, data checks, and financial operations. I work closely with business and technology
+      teams to solve problems, improve accuracy, and save time.
+    lead_themes: [sql, reporting, data, automation, data-mapping]
+    best_for: [Reporting Analyst, Data Analyst, Pricing Analyst, Financial Services Analyst, Securities Specialist, Data Management roles]

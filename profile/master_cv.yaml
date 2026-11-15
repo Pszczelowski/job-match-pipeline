@@ -1,0 +1,480 @@
+# Master CV fact file of the fictional demo persona "Alex Morgan" (examples/persona/).
+#
+# Every name, employer, e-mail address, phone number and date in this file is made up. The build of the public copy
+# (scripts/build_public_copy.py) places this folder at profile/ of the copy so that the app and its tests run without
+# any real person's data. Structure, fact ids and keys follow the real fact file (goal.md 5.4, 5.6).
+#
+# Rules
+#   1. Every fact has a stable id. Ids are never reused or renumbered.
+#   2. `texts` holds the bullet wording per CV variant; a key is missing when that CV does not contain the bullet.
+#   3. `numbers` lists every figure that appears in the bullet; the traceability check compares generated documents
+#      against these.
+#   4. Tailoring may reorder, select and rephrase. It may not add employers, titles, dates, skills, numbers or
+#      certificates that are not in this file.
+#   5. Status words: `in_progress`, `in_preparation` (a certificate only prepared for), `not_completed` and `completed`.
+
+meta:
+  schema_version: 1
+  built: 2026-10-31
+  sources:
+    resume: Alex_Morgan_-_Resume
+    resume_cs: Alex_Morgan_-_Resume_CS
+
+person:
+  name: Alex Morgan
+  email: alex.morgan@example.com
+  phone: "+41 76 000 00 00"
+  location: Zürich, Switzerland
+  nationality: Polish
+  permit: B
+  birthdate: 1990-01-15
+  linkedin: https://www.linkedin.com/in/alex-morgan-example/
+
+languages:
+  - { id: lang-en, language: English, level_cv: fluent }
+  - { id: lang-pl, language: Polish, level_cv: fluent }
+  - { id: lang-de, language: German, level_cv: basic }
+
+experience:
+  - id: exp-career-transition
+    title: Professional Development & Career Transition
+    employer: null
+    location: Zurich, Switzerland
+    start: 2025-07
+    end: present
+    bullets:
+      - id: exp-career-transition-jobsearch-agent
+        theme: ai
+        skills: [Python, SQLite, Docker, LLM scoring, process automation, agentic workflows]
+        origin: added_by_user_2026-10-31   # not in the CV PDFs; wording requested by the user for this project
+        status: in_progress
+        proof_url: null   # repo is private; add a link here if the user shares the project
+        texts:
+          resume: "AI Job-Search Pipeline: building a self-hosted agent that turns daily job alerts into ranked offers, tailored PDF applications and a daily report (Python, SQLite, Docker; designed and built with Claude)."
+          resume_cs: "AI Job-Search Pipeline: building a self-hosted agent that turns daily job alerts into ranked offers, tailored PDF applications and a daily report (Python, SQLite, Docker; designed and built with Claude)."
+        numbers: []
+      - id: exp-career-transition-jobsearch-engineering
+        theme: ai
+        skills: [Python, SQLite, pytest, GitHub Actions, CI/CD, SemVer releases, Docker, LLM workflow design, prompt versioning, multi-agent delegation, results schema validation, requirements specification, Bash, job schedulers]
+        # edited 2026-11-14 from the user's answer: Bash and job schedulers used in this project
+        origin: user 2026-11-02   # the user allowed adding the skills actually used; derived from the repo (requirements.txt, Dockerfile, .github/workflows, tests, prompts/, .claude/agents/)
+        status: in_progress
+        texts:
+          resume: "AI Job-Search Pipeline engineering: designed, specified (requirements in a versioned goal document) and steered the system with an AI coding assistant; automated tests (over 1,000) run in GitHub Actions CI with SemVer releases; versioned LLM prompts, delegation across several AI agents and validation of their results against a schema."
+          resume_cs: "AI Job-Search Pipeline engineering: designed, specified (requirements in a versioned goal document) and steered the system with an AI coding assistant; automated tests (over 1,000) run in GitHub Actions CI with SemVer releases; versioned LLM prompts, delegation across several AI agents and validation of their results against a schema."
+        numbers: ["over 1,000 automated tests"]
+      - id: exp-career-transition-sql-cert
+        theme: sql
+        skills: [SQL, Oracle Database SQL]
+        texts:
+          resume_cs: "SQL development: Preparing for Oracle Database SQL certification (1Z0-071: Oracle Database SQL Certified Associate)"
+        numbers: []
+        status: in_preparation
+      - id: exp-career-transition-agentic
+        theme: ai
+        skills: [AI agents, agentic workflows]
+        texts:
+          resume: "Agentic Workflows: Upskilling in the orchestration of AI Agents to streamline complex project lifecycles and data analysis."
+          resume_cs: "Agentic Workflows: Upskilling in the orchestration of AI Agents to streamline complex projects and data analysis."
+        numbers: []
+      - id: exp-career-transition-digital
+        theme: ai
+        skills: [AI integration, automation]
+        texts:
+          resume: "Digital Transformation: Researching AI integration strategies to enhance automations and workflow output quality."
+          resume_cs: "Digital Transformation: Researching AI integration strategies to enhance automations and workflow output quality."
+        numbers: []
+
+  - id: exp-contoso
+    title: Business Analyst / Manual Tester
+    title_aliases: [tester and business analyst]   # user 2026-11-10: a true description of this role; the check accepts it, the CV keeps the title above
+    employer: Contoso Fund Services
+    location: Zurich, Switzerland
+    start: 2023-08
+    end: 2025-07
+    bullets:
+      - id: exp-contoso-requirements-volume
+        theme: requirements
+        skills: [requirements gathering, user stories, releases]
+        origin: user 2026-11-02   # "thousands" written as 1,000+
+        texts:
+          resume: "Requirements at scale: Defined and documented 1,000+ requirements and user stories across 20+ releases."
+          resume_cs: "Requirements at scale: Defined and documented 1,000+ requirements and user stories across 20+ releases."
+        numbers: ["20+ releases", "1,000+ requirements and user stories"]
+      - id: exp-contoso-requirements
+        theme: requirements
+        skills: [requirements gathering, Fund Platform, documentation]
+        texts:
+          resume: "Requirements Gathering: Worked with IT and Operations to define and document requirements for the Fund Platform."
+          resume_cs: "Operational requirements: Worked closely with IT and Operations to define Fund Platform requirements and turn business needs into clear specifications. Refined user stories in Jira and clarified system behavior for development and testing."
+        numbers: []
+      - id: exp-contoso-testing
+        theme: testing
+        skills: [test cases, UAT, end-to-end testing, Xray]
+        texts:
+          resume: "Testing Management: Wrote detailed test cases and executed End-to-End UAT in Xray to ensure platform stability."
+          resume_cs: "System testing: Created detailed test cases and performed end to end UAT in Xray to verify platform changes."
+        numbers: []
+      - id: exp-contoso-testing-volume
+        theme: testing
+        skills: [BAT, UAT, test cases, defect analysis, regression testing, SQL, PL/SQL]
+        origin: user 2026-11-02   # "thousands" written as 1,000+
+        texts:
+          resume: "Test volume: Wrote 1,000+ BAT/UAT test cases and found hundreds of defects; wrote and executed regression tests, using SQL and PL/SQL for test data and defect analysis."
+          resume_cs: "Test volume: Wrote 1,000+ BAT/UAT test cases and found hundreds of defects; wrote and executed regression tests, using SQL and PL/SQL for test data and defect analysis."
+        numbers: ["1,000+ BAT/UAT test cases", "hundreds of defects found"]
+      - id: exp-contoso-bat
+        theme: testing
+        skills: [business acceptance testing, BAT]
+        origin: added_by_user_2026-11-02   # the user's instruction in chat: "add acceptance testing for BAT in Contoso and Northwind"; no further detail given
+        texts:
+          resume: "Business Acceptance Testing: Performed business acceptance testing (BAT)."
+          resume_cs: "Business acceptance testing: Performed business acceptance testing (BAT)."
+        numbers: []
+      - id: exp-contoso-agile
+        theme: agile
+        skills: [user stories, Jira, requirements]
+        texts:
+          resume: "Agile Delivery: Managed user stories in Jira, refining and rewriting requirements to ensure clarity for development teams."
+        numbers: []
+      - id: exp-contoso-docs
+        theme: documentation
+        skills: [Jira, Confluence, documentation]
+        texts:
+          resume: "Documentation: Managed Jira and Confluence documentation."
+        numbers: []
+      - id: exp-contoso-sql
+        theme: sql
+        skills: [SQL, PL/SQL, CTEs, report validation]
+        # edited 2026-11-02 from the user's answers: PL/SQL (queries) added from the user's answer
+        texts:
+          resume: "Utilized Advanced SQL (including CTEs) to check complex reports for the Daily Calculation project."
+          resume_cs: "SQL and data validation: Used SQL, including CTEs, to validate reports and check outputs for the Daily Calculation project."
+        numbers: []
+      - id: exp-contoso-sql-data
+        theme: sql
+        skills: [SQL, PL/SQL, data analysis, defect analysis]
+        origin: user 2026-11-02
+        texts:
+          resume: "SQL and PL/SQL queries: Pulled data for requirements and testing, built reports and analysed defects."
+          resume_cs: "SQL and PL/SQL queries: Pulled data for requirements and testing, built reports and analysed defects."
+        numbers: []
+      - id: exp-contoso-scrum
+        theme: agile
+        skills: [Scrum, stand-ups, sprint planning, retrospectives]
+        # edited 2026-11-02 from the user's answers: role in the team: tester / business analyst (not Scrum Master)
+        texts:
+          resume: "Scrum Participation: Contributed in a Scrum environment, participating in daily stand-ups, sprint planning, and retrospectives, as a team member (tester / business analyst)."
+        numbers: []
+      - id: exp-contoso-workshops
+        theme: stakeholders
+        skills: [workshops, training, knowledge transfer, Operations, Asset Management, senior management]
+        # edited 2026-11-02 from the user's answers: one workshop per release, 20+ releases; results: better knowledge retention, less confusion on releases, smoother transition
+        texts:
+          resume: "Knowledge Transfer: Led workshops and training sessions to empower business users and stakeholders; a workshop with the Operations and Asset Management teams and senior management up to Director level for each release, giving better knowledge retention, less confusion on releases and a smoother transition."
+          resume_cs: "Stakeholder support: Led workshops and training sessions to help business users understand platform changes; a workshop with the Operations and Asset Management teams and senior management up to Director level for each release."
+        numbers: ["20+ releases (one workshop per release)"]
+      - id: exp-contoso-ssrs
+        theme: reporting
+        skills: [SQL Server Reporting Services, report layouts, parameters, calculations, queries, end-to-end testing, unit testing, regression testing]
+        # edited 2026-11-02 from the user's answers: resume text added from the user's answer; no hour or step figures
+        texts:
+          resume: "SSRS Reporting: Built and maintained SSRS reports for the Daily Calculation project, used by the Operations and Asset Management teams; added features per requirements, wrote and executed unit and regression tests, and reduced errors."
+          resume_cs: "Reporting enhancements: Delivered multiple report improvements, including SQL Server Reporting Services enhancements by gathering requirements, modifying report layouts, parameters, calculations and queries, including End to End testing."
+        numbers: []
+      - id: exp-contoso-achievement
+        theme: achievement
+        skills: [Daily Calculation project, testing, SQL]
+        texts:
+          resume: "Biggest achievement: Delivery of Daily Calculation project - over 90% test accuracy in a demanding, fast-paced environment."
+          resume_cs: "Biggest achievement: Supported delivery of the Daily Calculation project via SQL report validation and End-to-End testing."
+        numbers: ["90% test accuracy"]   # resume only
+      - id: exp-contoso-testing-letter
+        theme: testing
+        skills: [testing, test plan, process optimization]
+        origin: cover_letter_sample_2026-10-31   # confirmed accurate by the user 31 Oct 2026; not in the CV PDFs
+        texts:
+          cover_letter: "Testing Excellence: Achieved over 90% test accuracy in a fast-paced environment at Contoso Fund Services while designing and executing detailed test plan. In result, my actions saved more than 50 hours annually per FTE by optimizing the process."
+        numbers: ["90% test accuracy", "50 hours per year per FTE saved"]
+      - id: exp-contoso-departure
+        theme: context
+        skills: []
+        texts:
+          resume: "Departed due to company-wide restructuring process (headcount reduction in the Zurich office)."
+          resume_cs: "Departed due to company-wide restructuring process (headcount reduction in the Zurich office)."
+        numbers: []
+
+  - id: exp-northwind-zurich
+    title: Business Analyst / Automation Developer
+    employer: Northwind
+    location: Zurich, Switzerland
+    start: 2021-11
+    end: 2023-07
+    bullets:
+      - id: exp-northwind-zurich-analysis
+        theme: requirements
+        skills: [Corporate Actions, process analysis]
+        texts:
+          resume: "Requirements Analysis: Conducted analysis for Corporate Actions systems to identify efficiency gaps."
+          resume_cs: "Financial operations: Analyzed corporate actions systems & processes to identify gaps and opportunities for improvement."
+        numbers: []
+      - id: exp-northwind-zurich-automation
+        theme: automation
+        skills: [Python, VBA, automation, test automation, Bash, job schedulers]
+        # edited 2026-11-14 from the user's answer: Bash and job schedulers used in the Corporate Actions area
+        # edited 2026-11-02 from the user's answers: the user: the 500 h figure comes from test automation
+        texts:
+          resume: "Automation Development: Developed Python & VBA scripts for test automation, saving over 500 manual hours per year."
+          resume_cs: "Process automation: Built Python and VBA scripts for test automation, saving over 500 hours annually."
+        numbers: ["500 hours per year saved"]
+      - id: exp-northwind-zurich-automation-letter
+        theme: automation
+        skills: [Python, VBA, automation, test automation]
+        origin: cover_letter_sample_2026-10-31   # confirmed accurate by the user 31 Oct 2026; not in the CV PDFs; the 500 h figure comes from test automation (user 2026-11-02)
+        texts:
+          cover_letter: "Process Automation: Developed test automation scripts, in result, increasing team productivity by 20% and eliminating over 500 manual hours annually at Northwind."
+        numbers: ["team productivity +20%", "500 hours per year saved"]
+      - id: exp-northwind-zurich-test-automation
+        theme: testing
+        skills: [Selenium, Playwright, UI test automation, regression testing, unit testing]
+        origin: added_by_user_2026-11-02   # the user's answer in chat: Selenium/Playwright "for a bit", at Northwind and in personal projects; level basic
+        texts:
+          resume: "Test Automation: Wrote UI test scripts and regression tests with Selenium and Playwright, and unit tests."
+          resume_cs: "Test automation: Wrote UI test scripts and regression tests with Selenium and Playwright, and unit tests."
+        numbers: []
+      - id: exp-northwind-zurich-ca-reconciliation
+        theme: operations
+        skills: [Corporate Actions, reconciliation, securities reconciliation, cash reconciliation]
+        origin: user 2026-11-02   # done manually, no automation
+        texts:
+          resume: "Reconciliation: Performed securities and cash reconciliation for Corporate Actions (manual process)."
+          resume_cs: "Reconciliation: Performed securities and cash reconciliation for Corporate Actions (manual process)."
+        numbers: []
+      - id: exp-northwind-zurich-bat
+        theme: testing
+        skills: [business acceptance testing, BAT]
+        origin: added_by_user_2026-11-02   # the user's instruction in chat: "add acceptance testing for BAT in Contoso and Northwind"; no further detail given
+        texts:
+          resume: "Business Acceptance Testing: Performed business acceptance testing (BAT)."
+          resume_cs: "Business acceptance testing: Performed business acceptance testing (BAT)."
+        numbers: []
+      - id: exp-northwind-zurich-javascript
+        theme: automation
+        skills: [JavaScript, macros, automation]
+        origin: added_by_user_2026-11-02   # the user's answer in chat: "some experience" with JavaScript at Northwind; level basic; maintenance of macros and scripts only (user 2026-11-02)
+        texts:
+          resume: "Macro Maintenance: Maintained JavaScript macros and scripts (maintenance only)."
+          resume_cs: "Macro maintenance: Maintained JavaScript macros and scripts (maintenance only)."
+        numbers: []
+      - id: exp-northwind-zurich-knowledge
+        theme: documentation
+        skills: [Confluence, Confluence administration, documentation, knowledge management, SOP, project management]
+        # edited 2026-11-02 from the user's answers: led the whole project, created the Confluence platform, migrated all Corporate Actions SOPs ("thousands of pages" written as 1,000+)
+        texts:
+          resume: "Knowledge Management: Designed and launched a comprehensive documentation tool using Confluence to streamline operations for global teams and to keep high retention of the process knowledge in the organization."
+          resume_cs: "Standard Operating Procedure (SOP) improvements: Developed a Confluence documentation platform & tooling to help global teams access process knowledge and support consistent ways of working by improving knowledge retention in the teams."
+        numbers: []
+      - id: exp-northwind-zurich-knowledge-migration
+        theme: documentation
+        skills: [Confluence, Confluence administration, SOP, project management, knowledge management]
+        origin: user 2026-11-02
+        texts:
+          resume: "Confluence Knowledge Platform: Managed the whole project, created the Confluence platform and migrated the whole Corporate Actions documentation, all SOPs (1,000+ pages), to retain knowledge in the team."
+          resume_cs: "Confluence knowledge platform: Managed the whole project, created the Confluence platform and migrated the whole Corporate Actions documentation, all SOPs (1,000+ pages), to retain knowledge in the team."
+        numbers: ["1,000+ pages migrated"]
+      - id: exp-northwind-zurich-workshops
+        theme: stakeholders
+        skills: [workshops, benefits calculation, cost estimation]
+        texts:
+          resume: "Stakeholder Workshops: Facilitated workshops to align business objectives with technical delivery and process improvements, including benefits calculation, estimated cost of development and maintenance."
+          resume_cs: "Stakeholder collaboration: Led workshops with business and technology teams to clarify requirements, agree on process improvements, and assess expected benefits, development costs, and ongoing maintenance needs."
+        numbers: []
+      - id: exp-northwind-zurich-swift
+        theme: data-mapping
+        skills: [SWIFT messages, source-to-target mapping]
+        texts:
+          resume: "Data Mapping: Created Source to Target data mapping for SWIFT messages to improve automated data processing."
+          resume_cs: "Data mapping: Created source to target mappings for SWIFT messages to support automated processing of financial data."
+        numbers: []
+      - id: exp-northwind-zurich-swift-mt
+        theme: data-mapping
+        skills: [SWIFT MT54x, SWIFT MT56x, Corporate Actions, requirements, automation, testing, ETL]
+        origin: user 2026-11-02
+        texts:
+          resume: "SWIFT MT54x / MT56x: Covered all Corporate Actions message series: requirements, automation, testing and ETL."
+          resume_cs: "SWIFT MT54x / MT56x: Covered all Corporate Actions message series: requirements, automation, testing and ETL."
+        numbers: []
+      - id: exp-northwind-zurich-swift-savings-letter
+        theme: cost-savings
+        skills: [SWIFT messages, automation, process improvement]
+        origin: cover_letter_sample_2026-10-31   # confirmed accurate by the user 31 Oct 2026; not in the CV PDFs; corrected 2026-11-02: the 200,000 CHF relates to the whole Northwind Zurich work, not SWIFT only
+        texts:
+          cover_letter: "Cost Savings: Saved over 200,000 CHF annually at Northwind through automation and process work, including the SWIFT messages and payments."
+        numbers: ["200,000 CHF per year saved"]
+
+  - id: exp-litware
+    title: Senior Business Analyst
+    employer: Litware Limited for Adventure Works Poland
+    location: Wroclaw, Poland
+    start: 2021-02
+    end: 2021-11
+    bullets:
+      - id: exp-litware-reporting
+        theme: automation
+        skills: [VBA, SQL, service management reporting, reporting automation]
+        # edited 2026-11-02 from the user's answers: the user owned the reporting, including its automation
+        texts:
+          resume: "Automation Development: Set service management reporting standards with VBA and SQL, saving $100,000+ annually."
+          resume_cs: "Automation Development: Set service management reporting standards with VBA and SQL, saving $100,000+ annually."
+        numbers: ["$100,000+ saved annually"]
+      - id: exp-litware-reporting-ownership
+        theme: reporting
+        skills: [reporting, reporting automation, VBA, SQL]
+        origin: user 2026-11-02
+        texts:
+          resume: "Reporting Ownership: Owned the service management reporting, including its automation."
+          resume_cs: "Reporting Ownership: Owned the service management reporting, including its automation."
+        numbers: []
+      - id: exp-litware-workshops
+        theme: stakeholders
+        skills: [workshops, senior management, internal clients, stakeholders]
+        # edited 2026-11-02 from the user's answers: workshops were for internal clients and stakeholders
+        texts:
+          resume: "Stakeholder Workshops: Facilitated workshops for Sr Mgmt., internal clients and stakeholders to explain the new process."
+          resume_cs: "Stakeholder Workshops: Facilitated workshops for Sr Mgmt., internal clients and stakeholders to explain the new process."
+        numbers: []
+
+  - id: exp-northwind-wroclaw
+    title: Business Analyst
+    employer: Northwind
+    location: Wroclaw, Poland
+    start: 2018-11
+    end: 2021-01
+    bullets:
+      - id: exp-northwind-wroclaw-realestate
+        theme: reporting
+        skills: [Tableau, Excel, SQL, Alteryx, Splunk, Real Estate utilization, trend analysis]
+        # edited 2026-11-02 from the user's answers: corrected: the 5 bn USD / 100 buildings are whole-Northwind-portfolio savings from the hybrid office-space model; the user supported the analysis (Alteryx, Excel, Splunk)
+        texts:
+          resume: "Delivered Real Estate dynamic utilization reports for EMEA Senior Mgmt. using Tableau, Excel and SQL by analyzing trends and presenting actionable insights; supported the analysis (Alteryx, Excel, Splunk) behind a hybrid office-space usage model with potential savings of over 5 billion USD across more than 100 buildings of the Northwind portfolio."
+          resume_cs: "Delivered Real Estate dynamic utilization reports for EMEA Senior Mgmt. using Tableau, Excel and SQL by analyzing trends and presenting actionable insights; supported the analysis (Alteryx, Excel, Splunk) behind a hybrid office-space usage model with potential savings of over 5 billion USD across more than 100 buildings of the Northwind portfolio."
+        numbers: ["5 billion USD potential savings", "100 buildings"]
+      - id: exp-northwind-wroclaw-vba-tableau
+        theme: automation
+        skills: [VBA, Tableau, reporting]
+        texts:
+          resume: "VBA and Tableau reports that enabled Sr. management to shape Real Estate utilization, saving 200 hours annually."
+          resume_cs: "VBA and Tableau reports that enabled Sr. management to shape Real Estate utilization, saving 200 hours annually."
+        numbers: ["200 hours saved annually"]
+      - id: exp-northwind-wroclaw-data
+        theme: data
+        skills: [SQL, Splunk, Alteryx, Excel, Real Estate data, data transformation]
+        # edited 2026-11-02 from the user's answers: data domain: Real Estate; tools Alteryx, Excel, Splunk
+        texts:
+          resume: "Researched and presented new ways of transforming existing data by using SQL, Splunk and Alteryx to Senior Mgmt."
+          resume_cs: "Researched and presented new ways of transforming existing data by using SQL, Splunk and Alteryx to Senior Mgmt."
+        numbers: []
+
+  - id: exp-cs-coo
+    title: Chief Operating Officer Specialist
+    employer: Fabrikam
+    location: Wroclaw, Poland
+    start: 2017-09
+    end: 2018-11
+    bullets:
+      - id: exp-cs-coo-hiring
+        theme: operations
+        skills: [hiring review process, coordination, budgeting, reporting]
+        # edited 2026-11-02 from the user's answers: owned the review of the hiring process, budgeting, reporting
+        texts:
+          resume: "Coordinating weekly hiring review process, including consolidation of hiring requests, review with COOs and Group IT COO."
+          resume_cs: "Coordinating weekly hiring review process, including consolidation of hiring requests, review with COOs and Group IT COO."
+        numbers: []
+      - id: exp-cs-coo-budget-reporting
+        theme: operations
+        skills: [hiring review process, budgeting, reporting]
+        origin: user 2026-11-02
+        texts:
+          resume: "Budgeting and reporting: Owned the review of the hiring process, the budgeting and the reporting."
+          resume_cs: "Budgeting and reporting: Owned the review of the hiring process, the budgeting and the reporting."
+        numbers: []
+
+  - id: exp-cs-workforce
+    title: Workforce Strategy IT Specialist
+    program: Graduate program
+    employer: Fabrikam
+    location: Wroclaw, Poland
+    start: 2016-09
+    end: 2017-08
+    bullets:
+      - id: exp-cs-workforce-planning
+        theme: operations
+        skills: [headcount forecasting, strategic business planning, hiring reviews]
+        # edited 2026-11-02 from the user's answers: headcount planning, recruitment alignment, reporting, skill retention
+        texts:
+          resume: "Coordinated global hiring reviews, headcount forecasting, and strategic business planning for Group IT"
+          resume_cs: "Coordinated global hiring reviews, headcount forecasting, and strategic business planning for Group IT"
+        numbers: []
+      - id: exp-cs-workforce-alignment
+        theme: operations
+        skills: [headcount planning, recruitment alignment, reporting, skill retention]
+        origin: user 2026-11-02
+        texts:
+          resume: "Workforce planning: Aligned headcount planning with recruitment, produced the reporting and worked on skill retention."
+          resume_cs: "Workforce planning: Aligned headcount planning with recruitment, produced the reporting and worked on skill retention."
+        numbers: []
+
+  - id: exp-cs-servicedesk
+    title: Global Service Desk Analyst
+    program: Graduate program
+    employer: Fabrikam
+    location: Wroclaw, Poland
+    start: 2014-10
+    end: 2016-08
+    bullets:
+      - id: exp-cs-servicedesk-support
+        theme: support
+        skills: [technical support, ticket management, shift-based work]
+        texts:
+          resume: "Provided technical support and ticket management for global partners in a shift-based environment"
+          resume_cs: "Provided technical support and ticket management for global partners in a shift-based environment"
+        numbers: []
+      - id: exp-cs-servicedesk-callcentre
+        theme: support
+        skills: [service desk, help desk, call centre, phone support, ticket management]
+        origin: user 2026-11-02   # full-time service desk / help desk role (phone and tickets); no figures
+        texts:
+          resume: "Service desk: Full-time help desk role in a call centre, handling support by phone and through tickets."
+          resume_cs: "Service desk: Full-time help desk role in a call centre, handling support by phone and through tickets."
+        numbers: []
+
+education:
+  - id: edu-university
+    institution: Tailspin University of Economics
+    qualification: Bachelor Studies in Business Administration
+    status: not_completed
+    location: Wroclaw, Poland
+    start: 2012-09
+    end: 2014-06
+  - id: edu-highschool
+    institution: High School Diploma
+    qualification: Maturity Exam
+    status: completed
+    start: 2008-09
+    end: 2011-06
+
+# Confirmed by the user on 2026-11-10 as really used. The check accepts them; they are not printed on the CV by themselves.
+# MiFID: knowledge of the rules only, no MiFID system.
+known_terms: [ServiceNow, SAP, MiFID, SDLC, Waterfall, Cucumber, Postman, QA, SLA, Power Automate, RPA, Azure, Linux, PowerShell,
+              GitLab, GitHub, JSON, XML, PostgreSQL, pandas, GenAI, ChatGPT]
+
+certifications:
+  - id: cert-oracle-1z0-071
+    name: "Oracle Database SQL Certified Associate (1Z0-071)"
+    status: in_preparation   # not obtained; only listed as preparation (resume_cs)
+
+skills:
+  - { id: skills-reporting-data, group: Reporting & Data, items: [Excel, SQL (including CTEs), T-SQL (MSSQL queries, stored procedures), PL/SQL (queries), Tableau, Power BI, KPI reporting, Alteryx, Splunk, ETL, SWIFT messages, SWIFT MT54x/MT56x, Source-to-target mapping, Reconciliation (securities and cash), Risk reporting, Service-management dashboards, SQL Server Reporting Services] }   # SQL Server Reporting Services: resume_cs only
+  - { id: skills-operations-controls, group: Operations & Controls, items: [Financial-services reporting, Data validation, Payments & Corporate Actions processes, Requirements gathering, Process improvement, UML, BPMN, Visio, draw.io, Reading REST/SOAP API calls (reading level), Stakeholder workshops] }
+  - { id: skills-automation-dev, group: Automation & Development, items: [VBA & macros, Python scripts, JavaScript (basic, maintenance of macros and scripts), Reading Java (reading level, not coding), PowerPoint, AI prompting / AI prompting and workflows, LLM workflow design with Claude Code, GitHub Actions CI, Docker, SQLite, pytest, Git] }   # AI prompting: resume; AI prompting and workflows: resume_cs
+  - { id: skills-testing-collab, group: Testing & Collaboration, items: [BAT/UAT, Test planning & execution, Selenium (basic), Playwright (basic), Xray, Jira, Scrum, Confluence, Confluence administration, SharePoint] }

@@ -1,0 +1,124 @@
+{
+ "stations": [
+  {
+   "id": "8503340",
+   "name": "Opfikon",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.429954,
+    "y": 8.561798
+   },
+   "distance": null,
+   "icon": "train"
+  },
+  {
+   "id": "8590741",
+   "name": "Opfikon, Austrasse",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.425037,
+    "y": 8.57521
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590748",
+   "name": "Opfikon, Neuwiesen",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.428039,
+    "y": 8.574339
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8580536",
+   "name": "Opfikon, Schulstrasse",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.430841,
+    "y": 8.573719
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8594553",
+   "name": "Opfikon, Schwimmbad",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.432646,
+    "y": 8.571554
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590744",
+   "name": "Opfikon, Dorf",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.43222,
+    "y": 8.577941
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590746",
+   "name": "Opfikon, Grätzli",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.424922,
+    "y": 8.581372
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590750",
+   "name": "Opfikon, Vreniker",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.428319,
+    "y": 8.579594
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590743",
+   "name": "Opfikon, Bubenholz",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.434499,
+    "y": 8.571689
+   },
+   "distance": null,
+   "icon": "bus"
+  },
+  {
+   "id": "8590747",
+   "name": "Opfikon, Grossacker",
+   "score": null,
+   "coordinate": {
+    "type": "WGS84",
+    "x": 47.426769,
+    "y": 8.579091
+   },
+   "distance": null,
+   "icon": "bus"
+  }
+ ]
+}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% from "_actions.html" import buttons %}
+{% block title %}Applied - Recruitment{% endblock %}
+{% block content %}
+<h1>Applied</h1>
+{% if not rows %}
+<p class="empty">You have not marked any job as applied yet.</p>
+{% else %}
+<div class="tablewrap">
+<table class="stack">
+  <thead><tr><th>Id</th><th>Title</th><th>Company</th><th>Applied on</th><th>Score</th><th>Band</th><th>PDF</th><th>Actions</th></tr></thead>
+  <tbody>
+  {% for r in rows %}
+  <tr>
+    <td class="n id" data-label="Id">{{ r.id }}</td>
+    <td class="title"><a href="/jobs/{{ r.id }}">{{ r.title }}</a>{% if r.repost %} <span class="flag">repost</span>{% endif %}</td>
+    <td data-label="Company">{{ r.company }}</td>
+    <td class="n" data-label="Applied on">{% if r.applied_at %}{{ r.applied_at[:10] }}{% else %}not recorded{% endif %}</td>
+    <td class="n" data-label="Score">{% if r.added %}added{% elif r.queued %}waiting{% elif r.score is not none %}{{ r.score }}{% else %}-{% endif %}</td>
+    <td class="n band">{% if r.band %}<span class="chip band-{{ r.band }}">{{ r.band|upper }}</span>{% endif %}</td>
+    <td data-label="PDF">{% for d in r.pdfs %}<a href="/jobs/{{ r.id }}/documents/{{ d.kind }}/approved-pdf">{{ d.label }}</a>{% if not loop.last %} {% endif %}{% else %}-{% endfor %}</td>
+    <td data-label="Actions">{{ buttons(r.id, r.actions, "applied", r.undo) }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+{% if pages > 1 %}
+<p class="pager">
+  {% if page_no > 1 %}<a href="/applied?page={{ page_no - 1 }}">Previous</a>{% endif %}
+  Page {{ page_no }} of {{ pages }}
+  {% if page_no < pages %}<a href="/applied?page={{ page_no + 1 }}">Next</a>{% endif %}
+</p>
+{% endif %}
+{% endif %}
+{% endblock %}

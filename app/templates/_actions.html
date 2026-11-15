@@ -1,0 +1,25 @@
+{# The Shortlist / Applied buttons (a form each: POST with the CSRF token of this action on this job), the Reject link (to its confirmation page)
+   and, when the job's last status change can be taken back, Undo: a form for Shortlisted, a link to a confirmation page for Applied. #}
+{% macro buttons(job_id, actions, nxt, undo=none) %}
+{% if actions or undo %}
+<div class="actions">
+{% for a in actions if a != "reject" %}
+  <form method="post" action="/jobs/{{ job_id }}/{{ a }}">
+    <input type="hidden" name="csrf" value="{{ csrf(a ~ ':' ~ job_id) }}">
+    <input type="hidden" name="next" value="{{ nxt }}">
+    <button type="submit">{{ labels[a] }}</button>
+  </form>
+{% endfor %}
+{% if undo and not undo.confirm %}
+  <form method="post" action="/jobs/{{ job_id }}/undo-status">
+    <input type="hidden" name="csrf" value="{{ csrf('undo-status:' ~ job_id) }}">
+    <input type="hidden" name="next" value="{{ nxt }}">
+    <button type="submit" title="Set this job back from {{ undo.from }} to {{ undo.to }}">Undo</button>
+  </form>
+{% elif undo %}
+  <a class="button" href="/jobs/{{ job_id }}/undo-status?next={{ nxt }}" title="Set this job back from {{ undo.from }} to {{ undo.to }} (asks first)">Undo&hellip;</a>
+{% endif %}
+{% if "reject" in actions %}<a class="button reject" href="/jobs/{{ job_id }}/reject?next={{ nxt }}">Reject&hellip;</a>{% endif %}
+</div>
+{% endif %}
+{% endmacro %}

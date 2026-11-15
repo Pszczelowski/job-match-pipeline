@@ -1,0 +1,258 @@
+# Vocabulary of the traceability check (goal.md 5.6, app/traceability.py).
+# Data, not code: extend these lists when a fake fact slips through or a real one is flagged.
+# Everything here only DETECTS candidates; whether a candidate is allowed is decided from
+# profile/master_cv.yaml (and profile/variants.yaml) plus the employer the caller passes in.
+
+# Skill and tool words. A word from this list that appears in a document but nowhere in the fact
+# files is a finding (kind "skill"). Matching is whole-word and case-insensitive, except for the
+# words under `case_sensitive`, which are also ordinary English words.
+skills_extra:
+  - Python
+  - Java
+  - JavaScript
+  - TypeScript
+  - "C#"
+  - "C++"
+  - Kotlin
+  - Scala
+  - Rust
+  - Ruby
+  - PHP
+  - Perl
+  - MATLAB
+  - Spark
+  - PySpark
+  - Hadoop
+  - Kafka
+  - Airflow
+  - dbt
+  - Snowflake
+  - Databricks
+  - BigQuery
+  - Redshift
+  - PostgreSQL
+  - MySQL
+  - MongoDB
+  - "PL/SQL"
+  - "T-SQL"
+  - "SQL Server"
+  - SSIS
+  - SSAS
+  - Informatica
+  - Talend
+  - Tableau
+  - "Power BI"
+  - Qlik
+  - QlikView
+  - Looker
+  - Visio
+  - Miro
+  - Figma
+  - Balsamiq
+  - "Azure DevOps"
+  - ServiceNow
+  - Salesforce
+  - SAP
+  - Workday
+  - Murex
+  - Calypso
+  - Bloomberg
+  - Avaloq
+  - Temenos
+  - Selenium
+  - Cypress
+  - Postman
+  - JMeter
+  - TestRail
+  - Cucumber
+  - Gherkin
+  - UML
+  - ArchiMate
+  - Kanban
+  - Waterfall
+  - DevOps
+  - "CI/CD"
+  - Jenkins
+  - GitHub
+  - GitLab
+  - Kubernetes
+  - Terraform
+  - Ansible
+  - AWS
+  - Azure
+  - GCP
+  - Linux
+  - REST
+  - API
+  - SOAP
+  - GraphQL
+  - React
+  - Angular
+  - Vue
+  - "Node.js"
+  - Django
+  - Flask
+  - FastAPI
+  - Spring
+  - ".NET"
+  - pandas
+  - NumPy
+  - TensorFlow
+  - PyTorch
+  - scikit-learn
+  - SAS
+  - SPSS
+  - Stata
+  - "Power Automate"
+  - "Power Apps"
+  - UiPath
+  - "Blue Prism"
+  - "Automation Anywhere"
+  - RPA
+  - ChatGPT
+  - "machine learning"
+  - NLP
+  - "data science"
+  - Excel
+  - SQL
+  - VBA
+  - Alteryx
+  - Splunk
+  - Jira
+  - Confluence
+  - Xray
+  - Scrum
+  - Agile
+  - SharePoint
+  - PowerPoint
+  - Docker
+  - Git
+  - ETL
+  - BPMN
+  - SQLite
+
+case_sensitive: [Spark, Scala, Rust, Ruby, Spring, Vue, React, Looker, Miro, Flask, Agile, REST, SAS, SOAP, SAFe, Git, Azure, Perl, Kafka]
+
+# Certificates and qualifications that are claimed by name. Absent from the fact files = finding
+# (kind "certificate"). Generic phrases ("X Certified Y", "certification") are caught by code.
+certificates:
+  - PMP
+  - PRINCE2
+  - CFA
+  - FRM
+  - CAIA
+  - ISTQB
+  - CBAP
+  - CCBA
+  - PMI-PBA
+  - CSM
+  - PSM
+  - PSPO
+  - CSPO
+  - SAFe
+  - ITIL
+  - TOGAF
+  - CISA
+  - CISSP
+  - CPA
+  - ACCA
+  - IIBA
+  - "Six Sigma"
+  - "Green Belt"
+  - "Black Belt"
+  - "Scrum Master"
+  - "Azure Fundamentals"
+
+# A certificate that the fact file lists as not obtained is only allowed in a block that says so.
+preparation_words: [prepar, in progress, working towards, pursuing, studying, currently, upcoming, planning to, aiming]
+
+# Employer aliases: key = employer name as written in profile/master_cv.yaml (ignored when it is
+# not there), values = other ways to write the same employer. "CS" is deliberately not an alias
+# for Fabrikam (two letters, too ambiguous; spell it out).
+employer_aliases:
+  "Contoso Fund Services": [Contoso]
+  "Litware Limited for Adventure Works Poland": [Litware, Adventure Works, Adventure Works Poland, Litware Limited]
+  "Northwind": [Northwind AG, Northwind Group]
+  "Fabrikam": [Fabrikam AG, Fabrikam Group]
+
+# Organisations that are detected on sight (case-insensitive when they have several words,
+# case-sensitive when they have one). Allowed only when they are a fact-file employer or the
+# target employer passed by the caller. Product vendors (Microsoft, Google, Oracle...) are left
+# out on purpose: "Microsoft Excel" is a tool, and "at Google" is caught by the "at X" rule.
+known_organisations:
+  - JP Morgan
+  - JPMorgan
+  - Goldman Sachs
+  - Morgan Stanley
+  - Deutsche Bank
+  - Citibank
+  - Citigroup
+  - Adventure Works
+  - Barclays
+  - BNP Paribas
+  - Societe Generale
+  - Santander
+  - Raiffeisen
+  - Zürcher Kantonalbank
+  - ZKB
+  - Julius Baer
+  - Vontobel
+  - Pictet
+  - Lombard Odier
+  - EFG
+  - Swiss Re
+  - Zurich Insurance
+  - Swiss Life
+  - Allianz
+  - AXA
+  - Generali
+  - Helvetia
+  - Baloise
+  - Mobiliar
+  - SIX
+  - LGT
+  - Sygnum
+  - Swissquote
+  - Accenture
+  - Deloitte
+  - PwC
+  - KPMG
+  - Ernst & Young
+  - McKinsey
+  - Capgemini
+  - Infosys
+  - Cognizant
+  - Swisscom
+  - Roche
+  - Novartis
+  - Nestlé
+  - Siemens
+  - SBB
+  - State Street
+  - BlackRock
+  - Fidelity
+  - Euroclear
+  - DTCC
+  - Litware
+  - Contoso
+  - Northwind
+  - Fabrikam
+
+# Last word of an organisation-like capitalised phrase ("Acme Holding", "Foo Capital Partners").
+org_suffixes: [AG, SA, GmbH, Ltd, Limited, Inc, LLC, plc, Corp, Corporation, Bank, Group, Holding, Holdings, Partners, Capital, Insurance, Services, Solutions, Technologies, Systems, Consulting, Labs, Industries, Pharma, Foundation, Institute, University, Company, Fund, Funds, Assurance, Trust, Advisors, Associates]
+
+# Dropped when two organisation names are compared ("SIX Group AG" = "SIX").
+legal_suffixes: [ag, sa, gmbh, ltd, limited, inc, llc, plc, corp, corporation, co, group, holding, holdings, the]
+
+# Places are never organisations in the "at X" rule.
+locations: [Zurich, Zürich, Wroclaw, Wrocław, Switzerland, Poland, Basel, Geneva, Bern, Lausanne, Lugano, Zug, Winterthur, Lucerne, Vaduz, Liechtenstein, Warsaw, Krakow, London, Frankfurt, Berlin, Remote, Europe, EMEA, Germany, Austria, Singapore]
+
+# Words that end a job title ("Senior Business Analyst").
+role_nouns: [Analyst, Engineer, Manager, Developer, Tester, Specialist, Officer, Consultant, Architect, Lead, Director, Head, Owner, Designer, Scientist, Administrator, Coordinator, Associate, Intern, Trainee, Assistant, Executive, Programmer, Planner, Controller, Auditor, Advisor, Adviser, President]
+
+# Adjectives that may stand in front of a title without being part of it ("an experienced Business Analyst").
+title_prefix_ignore: [as, experienced, skilled, dedicated, proven, motivated, passionate, former, previous, current, hands-on, reliable, detail-oriented, seasoned, accomplished]
+
+# Acronyms and camel-case words that are not skills. Any other all-caps acronym or camel-case word
+# that is not in the fact files is a finding (kind "skill").
+neutral_terms: [CV, PDF, USD, EUR, CHF, GBP, PLN, US, UK, EU, CH, PL, DE, AG, SA, OK, ID, FAQ, CEO, CFO, COO, CTO, CIO, HR, PR, AM, PM, LinkedIn, GmbH, EMEA, IT, AI, SaaS, AdTech, FinTech, HNW, UHNW]
