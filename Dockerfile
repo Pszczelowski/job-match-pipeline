@@ -1,7 +1,7 @@
 # Image of the job-match pipeline (goal.md 5.9a, Phase 5). Build: docker compose build
 # What is NOT in the image (see .dockerignore and compose.yaml): config.yaml, .env, data/, exchange/, output/, backups/, logs/.
 # They are mounted from the host when the container starts.
-FROM python:3.14-slim@sha256:930e1abba7c4e8f96ed93e8012c35d174d7732752731bbd5e8e757d7ec6f3966
+FROM python:3.15-slim@sha256:65a65fc7b30b06cb6df4930fd4650697cb23f4c2698ab81fc87e4b031bc36928
 
 # TZ: the container clock shows Zurich time (the scheduler uses the 'timezone' setting of config.yaml either way).
 # tzdata (system package) is needed for TZ; the Python package 'tzdata' in requirements.txt serves zoneinfo.
