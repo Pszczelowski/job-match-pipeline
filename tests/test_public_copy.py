@@ -401,3 +401,9 @@ def test_the_copy_holds_the_freeze_script_and_the_landing_page_with_the_name_unc
     assert out["tests/test_freeze_demo.py"] == files["tests/test_freeze_demo.py"]  # it checks those landing links
     assert not [f for f in bpc.scan_tree({p: out[p] for p in files if p.startswith("site/")}, rules, local)]
     assert "Morgan" not in out["scripts/freeze_demo.py"].decode("utf-8")
+
+
+def test_the_marker_file_is_git_ignored():
+    """v0.104.2: the copy's .gitignore (copied from this repo's) lists the marker, so it is never committed to the public repo."""
+    lines = (Path(__file__).resolve().parents[1] / ".gitignore").read_text(encoding="utf-8").splitlines()
+    assert bpc.MARKER in [line.strip() for line in lines]

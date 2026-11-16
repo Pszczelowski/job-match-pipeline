@@ -51,3 +51,6 @@ web/test-results/
 web/playwright-report/
 web/.wrangler/
 .wrangler/
+
+# marker of scripts/build_public_copy.py in the public copy folder; never committed there
+.public-copy-build
