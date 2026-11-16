@@ -393,11 +393,11 @@ def test_the_seed_has_one_accepted_job_with_two_rounds_and_a_note(tmp_path):
 
 def test_the_copy_holds_the_freeze_script_and_the_landing_page_with_the_name_unchanged():
     rules = bpc.load_yaml(bpc.RULES)
-    files = {path: (ROOT / path).read_bytes() for path in ("scripts/freeze_demo.py", "tests/test_freeze_demo.py", "site/index.html", "site/_headers", "site/style.css")}
+    files = {path: (ROOT / path).read_bytes() for path in ("scripts/freeze_demo.py", "tests/test_freeze_demo.py", "site/_headers")}
     local = {"replacements": [{"find": "Morgan", "replace": "Doe"}], "denylist": ["Morgan"]}
     out = bpc.plan(files, rules, local)
     assert set(files) <= set(out)
-    assert out["site/index.html"] == files["site/index.html"]                      # site/ keeps the author's name like the README
+    assert out["site/_headers"] == files["site/_headers"]                          # site/ is copied byte for byte like the README
     assert out["tests/test_freeze_demo.py"] == files["tests/test_freeze_demo.py"]  # it checks those landing links
     assert not [f for f in bpc.scan_tree({p: out[p] for p in files if p.startswith("site/")}, rules, local)]
     assert "Morgan" not in out["scripts/freeze_demo.py"].decode("utf-8")

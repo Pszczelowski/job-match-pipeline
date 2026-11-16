@@ -366,9 +366,10 @@ def _wrap_items(pdf: _Pdf, items: list[str], width: float) -> list[str]:
 
 
 def render_cv(doc: dict, facts: dict, variants: dict, out_path, photo=None, generated_on: date | None = None,
-              home_address: str = "") -> Rendered:
+              home_address: str = "", public: bool = False) -> Rendered:
     """`doc`: the stored `cv` content; `facts`: the parsed `profile/master_cv.yaml`; `variants`: the parsed
-    `profile/variants.yaml` (for the headline of the variant); `photo`: path of an image or None."""
+    `profile/variants.yaml` (for the headline of the variant); `photo`: path of an image or None. `public` (v0.101.0, the
+    landing-page CV): no email, phone, birthdate or mailto link; the GitHub link of `person["github"]` is printed."""
     person = facts["person"]
     name = person["name"]
     generated_on = generated_on or date.today()
@@ -385,9 +386,15 @@ def render_cv(doc: dict, facts: dict, variants: dict, out_path, photo=None, gene
     pdf.cell(0, 8.5, name, new_x="LMARGIN", new_y="NEXT")
     pdf.note(name)
     pdf.set_font(FAMILY, "", CV_PT)
-    lines = [(person["email"], f"mailto:{person['email']}"), (person["phone"], ""), (person["location"], ""),
-             (f"Nationality: {person['nationality']}", ""), (f"Permit: {person['permit']}", ""),
-             (f"Birthdate: {birthdate_text(person['birthdate'])}", ""), (person["linkedin"], person["linkedin"])]
+    if public:
+        lines = [(person["location"], ""), (f"Nationality: {person['nationality']}", ""), (f"Permit: {person['permit']}", ""),
+                 (person["linkedin"], person["linkedin"])]
+        if person.get("github"):
+            lines.append((person["github"], person["github"]))
+    else:
+        lines = [(person["email"], f"mailto:{person['email']}"), (person["phone"], ""), (person["location"], ""),
+                 (f"Nationality: {person['nationality']}", ""), (f"Permit: {person['permit']}", ""),
+                 (f"Birthdate: {birthdate_text(person['birthdate'])}", ""), (person["linkedin"], person["linkedin"])]
     for text, link in lines:
         if link:
             pdf.set_text_color(*BLUE)

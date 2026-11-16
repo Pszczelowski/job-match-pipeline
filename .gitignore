@@ -40,3 +40,14 @@ __pycache__/
 # Real values for the public-copy build (scripts/public_copy.local.example.yaml); never commit
 scripts/public_copy.local.yaml
 _site/
+
+# Landing page (v0.101.0): dependencies, build output and generated content
+web/node_modules/
+web/.next/
+web/out/
+web/generated/
+web/public/generated/
+web/test-results/
+web/playwright-report/
+web/.wrangler/
+.wrangler/

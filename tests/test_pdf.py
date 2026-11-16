@@ -298,6 +298,24 @@ def test_the_same_input_gives_the_same_bytes(tmp_path):
         assert a.path.read_bytes() == b.path.read_bytes()
 
 
+def test_render_cv_public_drops_contact_lines(tmp_path):
+    """public=True (the landing-page CV, v0.101.0): name, city, permit, nationality, photo, LinkedIn and GitHub stay; email,
+    phone, birthdate and any mailto link are gone."""
+    facts = copy.deepcopy(FACTS)
+    facts["person"]["github"] = "https://github.com/example-user"
+    r = pdf.render_cv(full_cv(), facts, VARIANTS, tmp_path / "c.pdf", PHOTO, DAY, public=True)
+    t = text_of(r.path)
+    person = FACTS["person"]
+    for kept in (person["name"], person["location"], "Permit: B", "Nationality: Polish", person["linkedin"], "github.com/example-user"):
+        assert kept in t
+    assert person["email"] not in t and person["phone"] not in t and "Birthdate" not in t and "15.01.1990" not in t
+    assert "@" not in t
+    uris = [a.get_object().get("/A", {}).get("/URI", "") for page in PdfReader(str(r.path)).pages for a in page.get("/Annots") or []]
+    assert uris and not any("mailto" in u for u in uris) and any("github.com" in u for u in uris)
+    full = text_of(pdf.render_cv(full_cv(), facts, VARIANTS, tmp_path / "f.pdf", PHOTO, DAY).path)
+    assert person["email"] in full and "Birthdate" in full            # the default is unchanged
+
+
 def test_the_home_address_never_reaches_a_file(tmp_path):
     address = "Rosenweg 12, 8180 Exampletown"
     d = copy.deepcopy(prompt_example()["cover_letter"])

@@ -50,6 +50,10 @@ exclude:
   - {glob: docs/TEST_CASES.md, reason: "private test log with real addresses and run notes (large)"}
   - {glob: "**/__pycache__/**", reason: "bytecode"}
   - {glob: .claude/worktrees/, reason: "agent worktrees"}
+  - {glob: web/, reason: "the owner's landing page (v0.101.0): personal timeline and portrait, built from the real profile"}
+  - {glob: tests/test_landing_build.py, reason: "reads profile/public_cv.yaml, profile/landing.yaml and the real master_cv.yaml, which are not copied"}
+  - {glob: profile/landing.yaml, reason: "the owner's landing-page content"}
+  - {glob: profile/public_cv.yaml, reason: "the owner's public CV selection"}
   # test files that cannot run in a copy without the private files they read (each names what it needs)
   - {glob: tests/test_ci_workflow.py, reason: "reads .github/workflows/ci.yml, which is not copied"}
   - {glob: tests/test_deployment.py, reason: "reads the release and version-check workflows and DEPLOYMENT_MANUAL.md, which are not copied"}
