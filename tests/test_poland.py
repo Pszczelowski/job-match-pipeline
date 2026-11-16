@@ -412,7 +412,7 @@ def test_a_polish_posting_is_not_clamped_to_69(conn, cfg, no_travel):
 def test_the_prompt_states_the_poland_rules(cfg):
     from app.prompt import load_prompt
     text, version = load_prompt(cfg)
-    assert version == "1.17.0"
+    assert version == "1.18.0"
     assert "`poland_remote`: 100" in text and "`poland_hybrid`: 85" in text and "`poland_work_mode_unknown`" in text
     assert "is not a red flag and not a gap" in text and "A posting written in Polish is not capped" in text
     assert "neither English nor Polish" in text and "JDG" in text

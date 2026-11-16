@@ -67,7 +67,7 @@ def _stored(conn, jid):
 
 def test_prompt_version_is_1_9_0_and_states_the_cap_of_the_config(cfg):
     text, version = load_prompt(cfg)
-    assert version == "1.17.0"
+    assert version == "1.18.0"
     cap = cfg["scoring"]["non_english_cap"]
     assert f"at most {cap}, the top of the low band" in text and f"min(formula, {cap})" in text
     assert cap == 49 < cfg["scoring"]["band_low_below"]                     # rule changed 69 -> 49 by user, 14 Nov 2026: low band

@@ -19,6 +19,10 @@ file comes out. No database, no network, no config. fpdf2 with the bundled EB Ga
   come from the stored document. The photo is optional (a missing photo gives a CV without photo and a warning).
 * Text stays selectable (embedded TrueType fonts). The creation date is the generation date, so the same input gives
   the same bytes.
+* ATS properties (v0.102.0, goal.md 5.6): embedded fonts with a ToUnicode map (every character extracts), no text in
+  images (the photo is the only image), no hidden, white or tiny text, the content stream in reading order, the
+  document language (/Lang en), title and author, and the contacts as plain text with their own link annotations
+  (email, phone, location, LinkedIn, then GitHub and the landing page). Pinned by tests/test_pdf.py.
 * The home address never reaches a file: every drawn string is checked against `home_address`.
 """
 from __future__ import annotations
@@ -146,6 +150,11 @@ def _clean(text) -> str:
     return re.sub(r"[  ]+", " ", s).strip()
 
 
+def display_url(url: str) -> str:
+    """The short visible form of a link: no scheme, no leading "www.", no trailing slash."""
+    return re.sub(r"^https?://(www\.)?", "", str(url).strip()).rstrip("/")
+
+
 def city_of(locations: list[str]) -> str:
     """The city for the line below the employer's name: the first place of the first location text."""
     for loc in locations or []:
@@ -175,6 +184,7 @@ class _Pdf(FPDF):
         for style, file in (("", "Regular"), ("B", "Bold"), ("I", "Italic"), ("BI", "BoldItalic")):
             self.add_font(FAMILY, style, str(FONT_DIR / f"EBGaramond-{file}.ttf"))
         self.set_title(title)
+        self.set_lang("en")
         self.set_author(author)
         self.set_creator("Recruitment pipeline (fpdf2)")
         self.set_creation_date(datetime(generated_on.year, generated_on.month, generated_on.day, tzinfo=timezone.utc))
@@ -239,7 +249,7 @@ def render_cover_letter(doc: dict, job: dict, facts: dict, generated_on: date, o
     pdf.note(name)
     pdf.set_font(FAMILY, "", 10.5)
     parts = [("email", person["email"], f"mailto:{person['email']}"), ("phone", person["phone"], ""),
-             ("linkedin", person["linkedin"], person["linkedin"])]
+             ("linkedin", display_url(person["linkedin"]), person["linkedin"])]
     for i, (_, text, link) in enumerate(parts):
         if i:
             pdf.write(5, "  |  ")
@@ -248,6 +258,16 @@ def render_cover_letter(doc: dict, job: dict, facts: dict, generated_on: date, o
         pdf.write(5, text, link=link)
         pdf.set_text_color(0, 0, 0)
         pdf.note(text)
+    web = _web_links(person)
+    if web:
+        pdf.ln(5)
+        for i, (text, link) in enumerate(web):
+            if i:
+                pdf.write(5, "  |  ")
+            pdf.set_text_color(*BLUE)
+            pdf.write(5, text, link=link)
+            pdf.set_text_color(0, 0, 0)
+            pdf.note(text)
     pdf.ln(11)
 
     pdf.set_font(FAMILY, "", LETTER_PT)
@@ -298,6 +318,24 @@ CV_PT = 10.5
 CV_LINE = 4.3              # mm
 CV_BULLET_INDENT = 4.2
 MARGIN_X = 11.4
+
+
+def _web_links(person: dict) -> list[tuple[str, str]]:
+    """(visible text, link) of the GitHub profile and the landing page, those the fact file has."""
+    return [(display_url(person[key]), person[key]) for key in ("github", "website") if person.get(key)]
+
+
+def _link_line(pdf: _Pdf, segments: list[tuple[str, str]]) -> None:
+    """One line of segments joined by " | "; a segment with a link is blue and has its own link annotation."""
+    for i, (text, link) in enumerate(segments):
+        if i:
+            pdf.cell(pdf.get_string_width(" | "), CV_LINE, " | ")
+        if link:
+            pdf.set_text_color(*BLUE)
+        pdf.cell(pdf.get_string_width(text), CV_LINE, text, link=link)
+        pdf.set_text_color(0, 0, 0)
+        pdf.note(text)
+    pdf.ln(CV_LINE)
 
 
 def _cv_heading(pdf: _Pdf, text: str) -> None:
@@ -369,7 +407,10 @@ def render_cv(doc: dict, facts: dict, variants: dict, out_path, photo=None, gene
               home_address: str = "", public: bool = False) -> Rendered:
     """`doc`: the stored `cv` content; `facts`: the parsed `profile/master_cv.yaml`; `variants`: the parsed
     `profile/variants.yaml` (for the headline of the variant); `photo`: path of an image or None. `public` (v0.101.0, the
-    landing-page CV): no email, phone, birthdate or mailto link; the GitHub link of `person["github"]` is printed."""
+    landing-page CV): no email, phone, birthdate or mailto link. Both headers end with one line: LinkedIn, then the GitHub
+    profile and the landing page (`person["github"]`, `person["website"]`), each visible and linked, on that line so
+    the header does not grow (the 2-page budgets of the prompt hold). The
+    ATS properties are listed in the module docstring."""
     person = facts["person"]
     name = person["name"]
     generated_on = generated_on or date.today()
@@ -387,20 +428,18 @@ def render_cv(doc: dict, facts: dict, variants: dict, out_path, photo=None, gene
     pdf.note(name)
     pdf.set_font(FAMILY, "", CV_PT)
     if public:
-        lines = [(person["location"], ""), (f"Nationality: {person['nationality']}", ""), (f"Permit: {person['permit']}", ""),
-                 (person["linkedin"], person["linkedin"])]
-        if person.get("github"):
-            lines.append((person["github"], person["github"]))
+        lines = [(person["location"], ""), (f"Nationality: {person['nationality']}", ""), (f"Permit: {person['permit']}", "")]
     else:
         lines = [(person["email"], f"mailto:{person['email']}"), (person["phone"], ""), (person["location"], ""),
                  (f"Nationality: {person['nationality']}", ""), (f"Permit: {person['permit']}", ""),
-                 (f"Birthdate: {birthdate_text(person['birthdate'])}", ""), (person["linkedin"], person["linkedin"])]
+                 (f"Birthdate: {birthdate_text(person['birthdate'])}", "")]
     for text, link in lines:
         if link:
             pdf.set_text_color(*BLUE)
         pdf.cell(100, CV_LINE, text, link=link, new_x="LMARGIN", new_y="NEXT")
         pdf.set_text_color(0, 0, 0)
         pdf.note(text)
+    _link_line(pdf, [(display_url(person["linkedin"]), person["linkedin"])] + _web_links(person))     # LinkedIn, GitHub, landing: one line
     header_bottom = pdf.get_y()
     photo_path = Path(photo) if photo else None
     if photo_path is not None and photo_path.is_file():

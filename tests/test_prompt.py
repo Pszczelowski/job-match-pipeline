@@ -36,7 +36,7 @@ def text():
 
 def test_load_prompt_returns_text_and_version(cfg):
     body, version = load_prompt(cfg)                       # the repository prompt is approved: no draft flag needed
-    assert version == "1.17.0" and body.startswith("# Scoring prompt") and "approved by the user" in body
+    assert version == "1.18.0" and body.startswith("# Scoring prompt") and "approved by the user" in body
 
 
 def test_a_draft_prompt_is_refused_for_real_use(cfg, tmp_path):

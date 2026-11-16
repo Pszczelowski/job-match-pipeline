@@ -199,7 +199,7 @@ def test_the_header_comes_from_the_fact_file(tmp_path):
     t = text_of(pdf.render_cv(full_cv(), FACTS, VARIANTS, tmp_path / "c.pdf", PHOTO, DAY).path)
     p = FACTS["person"]
     for value in (p["name"], p["email"], p["phone"], p["location"], f"Nationality: {p['nationality']}", f"Permit: {p['permit']}",
-                  "Birthdate: 15.01.1990", p["linkedin"]):
+                  "Birthdate: 15.01.1990", pdf.display_url(p["linkedin"])):
         assert value in t
 
 
@@ -306,7 +306,7 @@ def test_render_cv_public_drops_contact_lines(tmp_path):
     r = pdf.render_cv(full_cv(), facts, VARIANTS, tmp_path / "c.pdf", PHOTO, DAY, public=True)
     t = text_of(r.path)
     person = FACTS["person"]
-    for kept in (person["name"], person["location"], "Permit: B", "Nationality: Polish", person["linkedin"], "github.com/example-user"):
+    for kept in (person["name"], person["location"], "Permit: B", "Nationality: Polish", pdf.display_url(person["linkedin"]), "github.com/example-user", "morgan.pages.dev"):
         assert kept in t
     assert person["email"] not in t and person["phone"] not in t and "Birthdate" not in t and "15.01.1990" not in t
     assert "@" not in t
@@ -314,6 +314,120 @@ def test_render_cv_public_drops_contact_lines(tmp_path):
     assert uris and not any("mailto" in u for u in uris) and any("github.com" in u for u in uris)
     full = text_of(pdf.render_cv(full_cv(), facts, VARIANTS, tmp_path / "f.pdf", PHOTO, DAY).path)
     assert person["email"] in full and "Birthdate" in full            # the default is unchanged
+
+
+# --- ATS compliance of the CV (v0.102.0) ---------------------------------------------------------------------------
+
+def plain_text(path) -> str:
+    """The text of all pages in extraction order, white space collapsed."""
+    return text_of(path)
+
+
+def uris_of(path) -> list[str]:
+    return [a.get_object().get("/A", {}).get("/URI", "") for page in PdfReader(str(path)).pages for a in page.get("/Annots") or []]
+
+
+def test_display_url_strips_scheme_www_and_slash():
+    assert pdf.display_url("https://www.linkedin.com/in/alex-morgan-example/") == "linkedin.com/in/alex-morgan-example"
+    assert pdf.display_url("https://github.com/Morgan") == "github.com/Morgan"
+    assert pdf.display_url("http://example.org/") == "example.org"
+    assert pdf.display_url("example.org/x") == "example.org/x"
+
+
+def test_the_cv_header_shows_github_and_the_landing_page_with_links(tmp_path):
+    p = FACTS["person"]
+    for public in (False, True):
+        r = pdf.render_cv(full_cv(), FACTS, VARIANTS, tmp_path / f"c{public}.pdf", PHOTO, DAY, public=public)
+        t = plain_text(r.path)
+        for shown in ("github.com/Morgan", "morgan.pages.dev", "linkedin.com/in/alex-morgan-example"):
+            assert shown in t
+        uris = uris_of(r.path)
+        for url in (p["github"], p["website"], p["linkedin"]):
+            assert url in uris
+        if not public:
+            assert p["email"] in t and p["phone"] in t
+        else:
+            assert p["email"] not in t and p["phone"] not in t
+
+
+def test_the_cv_text_layer_reads_in_ats_order(tmp_path):
+    doc = full_cv()
+    p = FACTS["person"]
+    t = plain_text(pdf.render_cv(doc, FACTS, VARIANTS, tmp_path / "c.pdf", PHOTO, DAY).path)
+    pos = 0
+
+    def after(anchor: str) -> None:
+        nonlocal pos
+        i = t.find(anchor, pos)
+        assert i >= 0, f"{anchor!r} missing or out of order after position {pos}"
+        pos = i + len(anchor)
+
+    for anchor in (p["name"], p["email"], p["phone"], p["location"], "linkedin.com/in/alex-morgan-example", "github.com/Morgan",
+                   "morgan.pages.dev", " ".join(doc["summary"].split()[:6]), "WORK EXPERIENCE"):
+        after(anchor)
+    by_id = {e["id"]: e for e in FACTS["experience"]}
+    for entry in doc["experience"]:
+        e = by_id[entry["experience_id"]]
+        title = e["title"] + (f" – {e['program']}" if e.get("program") else "")
+        for anchor in (title, pdf.date_range(e["start"], e["end"]), e.get("employer") or "", e["location"],
+                       " ".join(entry["bullets"][0]["text"].split()[:5])):
+            if anchor:
+                after(anchor)
+    after("EDUCATION & LANGUAGES")
+    after("TECHNICAL SKILLS")
+    skills = t[pos:]
+    groups = {g["id"]: g for g in FACTS["skills"]}
+    for g in groups.values():
+        for item in g["items"]:
+            wording = pdf._item_for(item, "resume")
+            assert " ".join(wording.split()) in skills, f"skill item {wording!r} is not whole on one line"
+
+
+def test_the_pdf_declares_language_title_and_author(tmp_path):
+    for path in (pdf.render_cv(full_cv(), FACTS, VARIANTS, tmp_path / "c.pdf", PHOTO, DAY).path,
+                 pdf.render_cover_letter(prompt_example()["cover_letter"], job(), FACTS, DAY, tmp_path / "l.pdf").path):
+        reader = PdfReader(str(path))
+        assert str(reader.trailer["/Root"].get("/Lang")) == "en"
+        assert reader.metadata.title and reader.metadata.author == FACTS["person"]["name"]
+
+
+def test_the_cv_has_no_hidden_or_white_text(tmp_path):
+    """Guard (passes before v0.102.0): no invisible text render mode, only black or link-blue fills, no tiny fonts."""
+    path = pdf.render_cv(full_cv(), FACTS, VARIANTS, tmp_path / "c.pdf", PHOTO, DAY).path
+    allowed = {(0.0, 0.0, 0.0), tuple(round(c / 255, 3) for c in pdf.BLUE)}
+    for page in PdfReader(str(path)).pages:
+        ops = ContentStream(page.get_contents(), PdfReader(str(path))).operations
+        for operands, op in ops:
+            if op == b"Tr":
+                assert int(operands[0]) != 3
+            if op == b"rg":
+                assert tuple(round(float(x), 3) for x in operands) in allowed
+            if op == b"Tf":
+                assert float(operands[1]) >= 6
+
+
+def test_bullets_and_dashes_extract_as_plain_characters(tmp_path):
+    """Guard: the bullet and the en dash come out as real characters, no replacement or private-use code points."""
+    t = plain_text(pdf.render_cv(full_cv(), FACTS, VARIANTS, tmp_path / "c.pdf", PHOTO, DAY).path)
+    assert "•" in t and "–" in t
+    assert "�" not in t and not any(0xE000 <= ord(c) <= 0xF8FF for c in t)
+
+
+def test_no_skill_item_has_unbalanced_parentheses():
+    """A comma inside parentheses splits a YAML flow-list item in two ("T-SQL (MSSQL queries" / "stored procedures)")."""
+    import yaml
+    for rel in ("profile/master_cv.yaml", "examples/persona/master_cv.yaml"):
+        facts = yaml.safe_load((ROOT / rel).read_text(encoding="utf-8"))
+        for group in facts["skills"]:
+            for item in group["items"]:
+                assert str(item).count("(") == str(item).count(")"), f"{rel}: {item!r}"
+
+
+def test_the_letter_header_has_github_and_the_landing_page(tmp_path):
+    r = pdf.render_cover_letter(prompt_example()["cover_letter"], job(), FACTS, DAY, tmp_path / "l.pdf")
+    t = plain_text(r.path)
+    assert "github.com/Morgan" in t and "morgan.pages.dev" in t
+    assert FACTS["person"]["github"] in uris_of(r.path)
 
 
 def test_the_home_address_never_reaches_a_file(tmp_path):
@@ -668,7 +782,7 @@ def test_the_output_folder_is_ignored_by_git_and_the_fonts_are_bundled():
 
 def test_the_prompt_states_the_length_budgets_it_measured():
     text = (ROOT / "prompts" / "scoring_prompt.md").read_text(encoding="utf-8")
-    assert "Prompt version: 1.17.0" in text
+    assert "Prompt version: 1.18.0" in text
     assert "at most 350 words in total" in text and "at most 650 words in total" in text and "at most 30 bullets" in text
     assert "one A4 page" in text and "two" in text
 

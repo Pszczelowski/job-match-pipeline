@@ -30,20 +30,23 @@ from app import documents, pdf                                          # noqa: 
 
 PUBLIC_CV = ROOT / "profile" / "public_cv.yaml"
 LANDING = ROOT / "profile" / "landing.yaml"
-PHOTO = ROOT / "profile" / "photo.jpg"
+PORTRAIT_PHOTO = ROOT / "profile" / "portrait.jpg"   # the photo of the landing portrait and the public CV (1845x1432, metadata stripped); per-job CVs keep photo.jpg
 FONT_DIR = ROOT / "app" / "fonts"
-CONTENT_FIELDS = ("name", "linkedin", "github", "headline", "tagline", "timeline", "skills", "languages", "project")
+CONTENT_FIELDS = ("name", "linkedin", "github", "headline", "tagline", "description", "timeline", "skills", "languages", "project", "side_project")
 TIMELINE_FIELDS = ("title", "employer", "city", "dates", "bullets")
+SIDE_PROJECT_FIELDS = ("quote", "text", "callout", "tags")   # landing.yaml project_quote, project_text, project_callout, project_tags (v0.103.0)
 
 PALETTE = ((0x1B, 0x1B, 0x1B), (0xB6, 0x3E, 0x96), (0x9A, 0x9A, 0x9A), (0xF5, 0xF5, 0xF5))      # dark, magenta, grey, light (og.png)
 PORTRAIT_SIZE = (960, 1200)
-PORTRAIT_TONES = ((0x1B, 0x1B, 0x1B), (0x6B, 0x6B, 0x6B), (0xC8, 0xC8, 0xC8))      # the three bands of the portrait (no pink on the face)
-PORTRAIT_CUTS = (80, 150)             # grey thresholds between the three bands (after autocontrast)
-PORTRAIT_MEDIAN = 9                   # median filter size before the bands
+PORTRAIT_TONES = ((0x1B, 0x1B, 0x1B), (0x4A, 0x4A, 0x4A), (0x7C, 0x7C, 0x7C), (0xB4, 0xB4, 0xB4), (0xEE, 0xEE, 0xEE))   # five grey bands, no colour
+PORTRAIT_CUTS = (55, 100, 145, 190)   # grey thresholds between the five bands (after autocontrast)
+PORTRAIT_MEDIAN = 7                   # median filter size before the bands
 PORTRAIT_BAND_BLUR = 2.5              # blur of the band map, against speckle
 BG_TOLERANCE = 18                     # grey levels below the background that still count as background
 BG_SHARE = (0.15, 0.85)               # the subject must fill this share of the crop, else the background removal is not trusted
 OG_SIZE = (1200, 630)
+MIN_DESCRIPTION = 100                 # LinkedIn Post Inspector warns below 100 characters (v0.101.4)
+SITE_HOST = "morgan.pages.dev"
 
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 PHONE_RE = re.compile(r"(?<![\w.])\+?\d[\d ()/.\-]{7,}\d")
@@ -133,9 +136,30 @@ def build_content(master: dict, public_cv: dict, landing: dict) -> dict:
     wanted = landing.get("languages")
     languages = [{"language": l["language"], "level": l["level_cv"]} for l in master.get("languages", [])
                  if not wanted or l["id"] in wanted]
-    return {"name": person["name"], "linkedin": person["linkedin"], "github": public_cv["github"],
-            "headline": landing["headline"], "tagline": landing["tagline"], "timeline": timeline,
-            "skills": list(landing["skills"]), "languages": languages, "project": landing["project"]}
+    description = " ".join(str(landing.get("description") or "").split())
+    if len(description) < MIN_DESCRIPTION:
+        raise BuildError(f"landing.yaml description has {len(description)} characters, at least {MIN_DESCRIPTION} are needed")
+    content = {"name": person["name"], "linkedin": person["linkedin"], "github": public_cv["github"],
+               "headline": landing["headline"], "tagline": landing["tagline"], "description": description, "timeline": timeline,
+               "skills": list(landing["skills"]), "languages": languages, "project": landing["project"]}
+    side = side_project(landing)
+    if side:
+        content["side_project"] = side
+    return content
+
+
+def side_project(landing: dict) -> dict:
+    """The owner-written side-project section (quote, text, callout, tag chips); only the fields that are set, {} when none.
+    Text stays raw here: the page (React) escapes it when rendering."""
+    side = {}
+    for field in ("quote", "text", "callout"):
+        value = " ".join(str(landing.get(f"project_{field}") or "").split())
+        if value:
+            side[field] = value
+    tags = [str(t).strip() for t in landing.get("project_tags") or [] if str(t).strip()]
+    if tags:
+        side["tags"] = tags
+    return side
 
 
 def build_cv_doc(master: dict, variants: dict, public_cv: dict) -> dict:
@@ -152,7 +176,7 @@ def build_cv_doc(master: dict, variants: dict, public_cv: dict) -> dict:
             "skills": list(public_cv.get("skills") or [])}
 
 
-def render_public_cv(master: dict, variants: dict, public_cv: dict, out_path: Path, photo: Path = PHOTO) -> None:
+def render_public_cv(master: dict, variants: dict, public_cv: dict, out_path: Path, photo: Path = PORTRAIT_PHOTO) -> None:
     facts = dict(master)
     facts["person"] = dict(master["person"], github=public_cv["github"])
     photo_arg = photo if public_cv.get("show_photo") else None
@@ -182,7 +206,7 @@ def _background(grey: Image.Image) -> Image.Image | None:
 
 
 def illustration(photo: Path, box) -> Image.Image:
-    """The portrait: RGBA, the subject in three grey bands (#1B1B1B, #6B6B6B, #C8C8C8), the light background transparent (a soft
+    """The portrait: RGBA, the subject in five grey bands (PORTRAIT_TONES), the light background transparent (a soft
     circular mask when it cannot be told apart). EXIF turn, crop, LANCZOS upscale, median blur, bands, blurred band map. A fresh image
     (no EXIF, ICC or other metadata of the photo)."""
     with Image.open(photo) as src:
@@ -190,10 +214,12 @@ def illustration(photo: Path, box) -> Image.Image:
     mask = _background(ImageOps.grayscale(img))
     img = img.resize(PORTRAIT_SIZE, Image.LANCZOS)
     grey = ImageOps.autocontrast(ImageOps.grayscale(img), cutoff=1).filter(ImageFilter.MedianFilter(PORTRAIT_MEDIAN))
-    levels = grey.point([0 if v < PORTRAIT_CUTS[0] else 128 if v < PORTRAIT_CUTS[1] else 255 for v in range(256)])
+    band = lambda v: sum(v >= c for c in PORTRAIT_CUTS)
+    step = 255 / (len(PORTRAIT_TONES) - 1)
+    levels = grey.point([round(band(v) * step) for v in range(256)])
     levels = levels.filter(ImageFilter.GaussianBlur(PORTRAIT_BAND_BLUR))
-    tone = levels.point([0 if v < 64 else 1 if v < 192 else 2 for v in range(256)])
-    channels = [tone.point([PORTRAIT_TONES[t][c] if t < 3 else 0 for t in range(256)]) for c in range(3)]
+    tone = levels.point([min(len(PORTRAIT_TONES) - 1, round(v / step)) for v in range(256)])
+    channels = [tone.point([PORTRAIT_TONES[t][c] if t < len(PORTRAIT_TONES) else 0 for t in range(256)]) for c in range(3)]
     if mask is None:
         mask = Image.new("L", PORTRAIT_SIZE, 0)
         ImageDraw.Draw(mask).ellipse((0, 0, PORTRAIT_SIZE[0] - 1, PORTRAIT_SIZE[1] - 1), fill=255)
@@ -205,15 +231,58 @@ def illustration(photo: Path, box) -> Image.Image:
     return out
 
 
-def og_image(name: str, headline: str) -> Image.Image:
+def _fit(draw: ImageDraw.ImageDraw, text: str, font_file: str, size: int, width: int) -> ImageFont.FreeTypeFont:
+    """The largest font up to `size` whose rendering of `text` fits in `width` pixels."""
+    while True:
+        font = ImageFont.truetype(str(FONT_DIR / font_file), size)
+        if draw.textlength(text, font=font) <= width or size <= 20:
+            return font
+        size -= 2
+
+
+def _wrap(draw: ImageDraw.ImageDraw, text: str, font: ImageFont.FreeTypeFont, width: int) -> list[str]:
+    lines: list[str] = []
+    for word in text.split():
+        if lines and draw.textlength(f"{lines[-1]} {word}", font=font) <= width:
+            lines[-1] = f"{lines[-1]} {word}"
+        else:
+            lines.append(word)
+    return lines
+
+
+def og_image(name: str, headline: str, tagline: str = "", portrait: Image.Image | None = None) -> Image.Image:
+    """Link preview (v0.101.4): name, headline, tagline and site on the left, the grey portrait on the right; text sized
+    to stay readable when LinkedIn shows the card at about half size."""
     img = Image.new("RGB", OG_SIZE, PALETTE[3])
     draw = ImageDraw.Draw(img)
-    draw.rectangle((0, 0, 24, OG_SIZE[1]), fill=PALETTE[1])
-    big = ImageFont.truetype(str(FONT_DIR / "EBGaramond-Bold.ttf"), 96)
-    small = ImageFont.truetype(str(FONT_DIR / "EBGaramond-Regular.ttf"), 44)
-    draw.text((90, 210), name, font=big, fill=PALETTE[0])
-    draw.rectangle((90, 340, 330, 346), fill=PALETTE[1])
-    draw.text((90, 380), headline, font=small, fill=PALETTE[2])
+    draw.rectangle((0, 0, 16, OG_SIZE[1]), fill=PALETTE[1])
+    text_w = 600 if portrait is not None else 1040
+    if portrait is not None:
+        circle = 440
+        box = (OG_SIZE[0] - 70 - circle, (OG_SIZE[1] - circle) // 2)
+        disc = Image.new("RGBA", (circle, circle), (0xC9, 0xC9, 0xC9, 255))
+        p = portrait.copy()
+        p.thumbnail((circle, int(circle * 1.25)), Image.LANCZOS)
+        disc.alpha_composite(p, ((circle - p.width) // 2, circle - p.height + int(circle * 0.18)) if p.height > circle else (0, 0))
+        mask = Image.new("L", (circle * 4, circle * 4), 0)
+        ImageDraw.Draw(mask).ellipse((0, 0, circle * 4 - 1, circle * 4 - 1), fill=255)
+        img.paste(disc.convert("RGB"), box, mask.resize((circle, circle), Image.LANCZOS))
+    x = 80
+    big = _fit(draw, name, "EBGaramond-Bold.ttf", 84, text_w)
+    mid = _fit(draw, headline, "EBGaramond-Regular.ttf", 46, text_w)
+    small = ImageFont.truetype(str(FONT_DIR / "EBGaramond-Regular.ttf"), 34)
+    tag = _wrap(draw, tagline, small, text_w)[:3]
+    y = 120 if len(tag) > 2 else 140
+    draw.text((x, y), name, font=big, fill=PALETTE[0])
+    y += 112
+    draw.rectangle((x, y, x + 200, y + 6), fill=PALETTE[1])
+    y += 30
+    draw.text((x, y), headline, font=mid, fill=(0x3A, 0x3A, 0x3A))
+    y += 72
+    for line in tag:
+        draw.text((x, y), line, font=small, fill=(0x5A, 0x5A, 0x5A))
+        y += 44
+    draw.text((x, OG_SIZE[1] - 80), SITE_HOST, font=small, fill=PALETTE[1])
     return img
 
 
@@ -287,7 +356,7 @@ def contact_findings(texts: dict[str, str], values: dict[str, str], name: str, l
 
 # ----------------------------------------------------------------------------- the build
 
-def build(web: Path, master: dict, variants: dict, public_cv: dict, landing: dict, photo: Path = PHOTO,
+def build(web: Path, master: dict, variants: dict, public_cv: dict, landing: dict, photo: Path = PORTRAIT_PHOTO, portrait_photo: Path = PORTRAIT_PHOTO,
           config_path: Path | None = ROOT / "config.yaml") -> list[str]:
     """Builds into a temporary folder, checks it, then moves it under `web`. Returns the files written (relative to `web`);
     raises BuildError on a finding or an unknown id (nothing is written to `web`)."""
@@ -298,8 +367,9 @@ def build(web: Path, master: dict, variants: dict, public_cv: dict, landing: dic
         gen = tmp / "public" / "generated"
         gen.mkdir(parents=True)
         (tmp / "generated" / "content.json").write_text(json.dumps(content, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-        illustration(photo, landing["portrait_box"]).save(gen / "portrait.webp", "WEBP", lossless=True, exact=True)
-        og_image(content["name"], content["headline"]).save(gen / "og.png", "PNG")
+        portrait = illustration(portrait_photo, landing["portrait_box"])
+        portrait.save(gen / "portrait.webp", "WEBP", lossless=True, exact=True)
+        og_image(content["name"], content["headline"], content["tagline"], portrait).save(gen / "og.png", "PNG")
         render_public_cv(master, variants, public_cv, gen / "cv.pdf", photo)
         texts = pdf_texts(gen / "cv.pdf")
         texts["content.json"] = (tmp / "generated" / "content.json").read_text(encoding="utf-8")

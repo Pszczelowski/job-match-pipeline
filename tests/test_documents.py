@@ -973,7 +973,7 @@ def test_german_not_stated_applies_to_the_letter_only(conn, cfg):
 
 def test_the_prompt_states_the_german_rule():
     text = (ROOT / "prompts" / "scoring_prompt.md").read_text(encoding="utf-8")
-    assert "Prompt version: 1.17.0" in text and "approved by the user" in text and "-draft" not in text.split("\n")[2]
+    assert "Prompt version: 1.18.0" in text and "approved by the user" in text and "-draft" not in text.split("\n")[2]
     assert "my German is basic" in text and "never claim, imply or round up a german level" in text.lower()
 
 
