@@ -1,14 +1,7 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="240" viewBox="0 0 960 240" role="img" aria-label="Need someone who turns chaos into a system? Business Analyst, Zürich, banking and process automation. See my CV.">
-  <style>
-    text{font-family:Montserrat,'Segoe UI',Helvetica,Arial,sans-serif}
-    .h{font-size:34px;font-weight:900;fill:#f5f5f5}
-    .s{font-size:17px;font-weight:500;fill:#bdbdbd}
-    .btn{font-size:17px;font-weight:800;fill:#fff}
-  </style>
-  <rect x="10" y="10" width="940" height="220" rx="28" fill="#b63e96"/>
-  <rect width="940" height="220" rx="28" fill="#1b1b1b"/>
-  <text x="470" y="74" text-anchor="middle" class="h">Need someone who turns chaos into a system?</text>
-  <text x="470" y="112" text-anchor="middle" class="s">Business Analyst · Zürich · banking and process automation</text>
-  <rect x="380" y="140" width="180" height="50" rx="25" fill="#b63e96"/>
-  <text x="470" y="171" text-anchor="middle" class="btn">See my CV →</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="400" viewBox="0 0 960 400" role="img" aria-label="Need someone who turns chaos into a system? Business Analyst, Zürich, banking and process automation. See my CV.">
+<style>text{font-family:Montserrat,'Segoe UI',Helvetica,Arial,sans-serif;fill:#1b1b1b}.k{font-size:24px;font-weight:800;letter-spacing:3px;fill:#b63e96}.h{font-size:52px;font-weight:900}.t{font-size:40px;font-weight:800}.b{font-size:29px;font-weight:500;fill:#4a4a4a}.n{font-size:26px;font-weight:800;fill:#b63e96}.big{font-size:64px;font-weight:900;fill:#b63e96}.p{font-size:28px;font-weight:700;fill:#f5f5f5}</style>
+<rect x="10" y="10" width="940" height="380" rx="30" fill="#b63e96"/><rect width="940" height="380" rx="30" fill="#1b1b1b"/>
+<text x="470" y="92" text-anchor="middle" class="h" style="fill:#f5f5f5">Need someone who turns</text><text x="470" y="152" text-anchor="middle" class="h" style="fill:#f5f5f5">chaos into a system?</text>
+<text x="470" y="210" text-anchor="middle" class="b" style="fill:#bdbdbd">Business Analyst · Zürich · banking and automation</text>
+<rect x="300" y="250" width="340" height="80" rx="40" fill="#b63e96"/><text x="470" y="302" text-anchor="middle" class="t" style="fill:#fff;font-size:34px">See my CV →</text>
 </svg>

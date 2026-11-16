@@ -1,28 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-label="How I work, in one project: 1 spec, requirements first; 190 releases in 16 days, ship small and often; 8 AI agents, leading an AI team">
-  <style>
-    text{font-family:Montserrat,'Segoe UI',Helvetica,Arial,sans-serif;fill:#1b1b1b}
-    .k{font-size:13px;font-weight:800;letter-spacing:2px;fill:#b63e96}
-    .h{font-size:34px;font-weight:900}
-    .big{font-size:44px;font-weight:900;fill:#b63e96}
-    .t{font-size:20px;font-weight:800}
-    .b{font-size:14px;font-weight:500;fill:#4a4a4a}
-  </style>
-  <rect width="960" height="360" fill="#f5f5f5" rx="24"/>
-  <text x="480" y="46" text-anchor="middle" class="k">WHAT IT SHOWS</text>
-  <text x="480" y="88" text-anchor="middle" class="h">How I work, in one project</text>
-  <g transform="translate(24,120)">
-    <rect x="8" y="8" width="284" height="200" rx="26" fill="#1b1b1b"/><rect width="284" height="200" rx="26" fill="#fff" stroke="#1b1b1b" stroke-width="2"/>
-    <text x="26" y="64" class="big">1 spec</text><text x="26" y="100" class="t">Requirements first</text>
-    <text x="26" y="132" class="b">One written source of truth,</text><text x="26" y="152" class="b">every decision recorded.</text><text x="26" y="172" class="b">Same discipline as at the bank.</text>
-  </g>
-  <g transform="translate(330,120)">
-    <rect x="8" y="8" width="284" height="200" rx="26" fill="#1b1b1b"/><rect width="284" height="200" rx="26" fill="#fff" stroke="#1b1b1b" stroke-width="2"/>
-    <text x="26" y="64" class="big">190</text><text x="26" y="100" class="t">Ship small, ship often</text>
-    <text x="26" y="132" class="b">Releases in 16 days, each</text><text x="26" y="152" class="b">tested and documented</text><text x="26" y="172" class="b">before it went live.</text>
-  </g>
-  <g transform="translate(636,120)">
-    <rect x="8" y="8" width="284" height="200" rx="26" fill="#1b1b1b"/><rect width="284" height="200" rx="26" fill="#fff" stroke="#1b1b1b" stroke-width="2"/>
-    <text x="26" y="64" class="big">8 agents</text><text x="26" y="100" class="t">Leading an AI team</text>
-    <text x="26" y="132" class="b">I set the goals and approved</text><text x="26" y="152" class="b">every change; AI agents planned,</text><text x="26" y="172" class="b">coded, tested and reviewed.</text>
-  </g>
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="780" viewBox="0 0 960 780" role="img" aria-label="How I work, in one project: 1 spec, requirements first; 190 releases in 16 days; 8 AI agents, leading an AI team">
+<style>text{font-family:Montserrat,'Segoe UI',Helvetica,Arial,sans-serif;fill:#1b1b1b}.k{font-size:24px;font-weight:800;letter-spacing:3px;fill:#b63e96}.h{font-size:52px;font-weight:900}.t{font-size:40px;font-weight:800}.b{font-size:29px;font-weight:500;fill:#4a4a4a}.n{font-size:26px;font-weight:800;fill:#b63e96}.big{font-size:64px;font-weight:900;fill:#b63e96}.p{font-size:28px;font-weight:700;fill:#f5f5f5}</style>
+<rect width="960" height="780" rx="28" fill="#f5f5f5"/><text x="480" y="56" text-anchor="middle" class="k">WHAT IT SHOWS</text><text x="480" y="118" text-anchor="middle" class="h">How I work, in one project</text>
+<rect x="48" y="158" width="872" height="176" rx="26" fill="#1b1b1b"/><rect x="40" y="150" width="872" height="176" rx="26" fill="#fff" stroke="#1b1b1b" stroke-width="2"/>
+<text x="76" y="210" class="big">1 spec</text><text x="76" y="258" class="t">Requirements first</text><text x="76" y="298" class="b">One source of truth, every decision logged.</text>
+<rect x="48" y="358" width="872" height="176" rx="26" fill="#1b1b1b"/><rect x="40" y="350" width="872" height="176" rx="26" fill="#fff" stroke="#1b1b1b" stroke-width="2"/>
+<text x="76" y="410" class="big">190</text><text x="76" y="458" class="t">Ship small, ship often</text><text x="76" y="498" class="b">Releases in 16 days, each tested and documented.</text>
+<rect x="48" y="558" width="872" height="176" rx="26" fill="#1b1b1b"/><rect x="40" y="550" width="872" height="176" rx="26" fill="#fff" stroke="#1b1b1b" stroke-width="2"/>
+<text x="76" y="610" class="big">8 agents</text><text x="76" y="658" class="t">Leading an AI team</text><text x="76" y="698" class="b">I set the goals, AI agents did the work.</text>
 </svg>
