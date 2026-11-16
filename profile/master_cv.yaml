@@ -29,6 +29,8 @@ person:
   permit: B
   birthdate: 1990-01-15
   linkedin: https://www.linkedin.com/in/alex-morgan-example/
+  github: https://github.com/alex-morgan-example
+  website: https://alex-morgan.example.org
 
 languages:
   - { id: lang-en, language: English, level_cv: fluent }

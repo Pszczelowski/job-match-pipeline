@@ -306,7 +306,7 @@ def test_render_cv_public_drops_contact_lines(tmp_path):
     r = pdf.render_cv(full_cv(), facts, VARIANTS, tmp_path / "c.pdf", PHOTO, DAY, public=True)
     t = text_of(r.path)
     person = FACTS["person"]
-    for kept in (person["name"], person["location"], "Permit: B", "Nationality: Polish", pdf.display_url(person["linkedin"]), "github.com/example-user", "morgan.pages.dev"):
+    for kept in (person["name"], person["location"], "Permit: B", "Nationality: Polish", pdf.display_url(person["linkedin"]), "github.com/example-user", pdf.display_url(person["website"])):
         assert kept in t
     assert person["email"] not in t and person["phone"] not in t and "Birthdate" not in t and "15.01.1990" not in t
     assert "@" not in t
@@ -339,7 +339,7 @@ def test_the_cv_header_shows_github_and_the_landing_page_with_links(tmp_path):
     for public in (False, True):
         r = pdf.render_cv(full_cv(), FACTS, VARIANTS, tmp_path / f"c{public}.pdf", PHOTO, DAY, public=public)
         t = plain_text(r.path)
-        for shown in ("github.com/Morgan", "morgan.pages.dev", "linkedin.com/in/alex-morgan-example"):
+        for shown in (pdf.display_url(p["github"]), pdf.display_url(p["website"]), pdf.display_url(p["linkedin"])):
             assert shown in t
         uris = uris_of(r.path)
         for url in (p["github"], p["website"], p["linkedin"]):
@@ -362,8 +362,8 @@ def test_the_cv_text_layer_reads_in_ats_order(tmp_path):
         assert i >= 0, f"{anchor!r} missing or out of order after position {pos}"
         pos = i + len(anchor)
 
-    for anchor in (p["name"], p["email"], p["phone"], p["location"], "linkedin.com/in/alex-morgan-example", "github.com/Morgan",
-                   "morgan.pages.dev", " ".join(doc["summary"].split()[:6]), "WORK EXPERIENCE"):
+    for anchor in (p["name"], p["email"], p["phone"], p["location"], pdf.display_url(p["linkedin"]), pdf.display_url(p["github"]),
+                   pdf.display_url(p["website"]), " ".join(doc["summary"].split()[:6]), "WORK EXPERIENCE"):
         after(anchor)
     by_id = {e["id"]: e for e in FACTS["experience"]}
     for entry in doc["experience"]:
@@ -416,7 +416,9 @@ def test_bullets_and_dashes_extract_as_plain_characters(tmp_path):
 def test_no_skill_item_has_unbalanced_parentheses():
     """A comma inside parentheses splits a YAML flow-list item in two ("T-SQL (MSSQL queries" / "stored procedures)")."""
     import yaml
-    for rel in ("profile/master_cv.yaml", "examples/persona/master_cv.yaml"):
+    rels = [rel for rel in ("profile/master_cv.yaml", "examples/persona/master_cv.yaml") if (ROOT / rel).exists()]
+    assert "profile/master_cv.yaml" in rels            # the public copy has the persona there and no examples/ folder
+    for rel in rels:
         facts = yaml.safe_load((ROOT / rel).read_text(encoding="utf-8"))
         for group in facts["skills"]:
             for item in group["items"]:
@@ -426,7 +428,8 @@ def test_no_skill_item_has_unbalanced_parentheses():
 def test_the_letter_header_has_github_and_the_landing_page(tmp_path):
     r = pdf.render_cover_letter(prompt_example()["cover_letter"], job(), FACTS, DAY, tmp_path / "l.pdf")
     t = plain_text(r.path)
-    assert "github.com/Morgan" in t and "morgan.pages.dev" in t
+    p = FACTS["person"]
+    assert pdf.display_url(p["github"]) in t and pdf.display_url(p["website"]) in t
     assert FACTS["person"]["github"] in uris_of(r.path)
 
 
