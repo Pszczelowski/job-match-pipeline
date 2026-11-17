@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="960" height="360" viewBox="0 0 960 360" role="img" aria-label="The story behind it: 16 days from idea to daily use. How it was built, day by day, and the lessons learned. Read the story.">
+<style>text{font-family:Montserrat,'Segoe UI',Helvetica,Arial,sans-serif;fill:#1b1b1b}.k{font-size:24px;font-weight:800;letter-spacing:3px;fill:#b63e96}.h{font-size:52px;font-weight:900}.b{font-size:29px;font-weight:500;fill:#4a4a4a}.btn{font-size:34px;font-weight:800;fill:#fff}</style>
+<rect width="960" height="360" rx="28" fill="#f5f5f5"/>
+<text x="480" y="62" text-anchor="middle" class="k">THE STORY BEHIND IT</text>
+<text x="480" y="128" text-anchor="middle" class="h">16 days, idea to daily use</text>
+<text x="480" y="182" text-anchor="middle" class="b">How it was built, day by day, and the lessons learned</text>
+<rect x="318" y="226" width="340" height="80" rx="40" fill="#1b1b1b"/>
+<rect x="310" y="218" width="340" height="80" rx="40" fill="#b63e96" stroke="#1b1b1b" stroke-width="2"/>
+<text x="480" y="270" text-anchor="middle" class="btn">Read the story →</text>
+</svg>
