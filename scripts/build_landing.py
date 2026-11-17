@@ -46,7 +46,7 @@ BG_TOLERANCE = 18                     # grey levels below the background that st
 BG_SHARE = (0.15, 0.85)               # the subject must fill this share of the crop, else the background removal is not trusted
 OG_SIZE = (1200, 630)
 MIN_DESCRIPTION = 100                 # LinkedIn Post Inspector warns below 100 characters (v0.101.4)
-SITE_HOST = "morgan.pages.dev"
+SITE_HOST = "morgan.com"
 
 EMAIL_RE = re.compile(r"[\w.+-]+@[\w-]+(?:\.[\w-]+)+")
 PHONE_RE = re.compile(r"(?<![\w.])\+?\d[\d ()/.\-]{7,}\d")

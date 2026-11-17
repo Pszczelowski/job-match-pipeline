@@ -1,6 +1,6 @@
 <!--
-Version: 0.105.4
-Date: 2026-11-16
+Version: 0.105.5
+Date: 2026-11-17
 Status: verified: tests measured at v0.99.0 on 15 Nov 2026 (3,807 passed, 21 skipped); releases measured with gh on 15 Nov 2026; the agent count was read in .claude/agents/ on 14 Nov 2026. Graphics: docs/assets/readme/*.svg (v0.104.0). Screenshot: demo database of fictional jobs, 15 Nov 2026.
 -->
 <div align="center">
@@ -24,7 +24,7 @@ When my own job hunt grew to almost 1,000 alerts a month, I did what I do at wor
 |:---:|:---:|:---:|
 | alerts a month, sorted | from idea to daily use | automated tests |
 
-**[See my CV →](https://pszczelowski.pages.dev/)**
+**[See my CV →](https://pszczelowski.com/)**
 
 
 
@@ -38,8 +38,8 @@ When my own job hunt grew to almost 1,000 alerts a month, I did what I do at wor
 
 <p align="center"><a href="docs/README.md"><img src="docs/assets/readme/story.svg" alt="The story behind it: how it was built, day by day, and the lessons learned. Read the story" width="100%"></a></p>
 
-<p align="center"><a href="https://pszczelowski.pages.dev/"><img src="docs/assets/readme/cta.svg" alt="Need someone who turns chaos into a system? See my CV" width="100%"></a></p>
+<p align="center"><a href="https://pszczelowski.com/"><img src="docs/assets/readme/cta.svg" alt="Need someone who turns chaos into a system? See my CV" width="100%"></a></p>
 
-<p align="center"><a href="https://pszczelowski.pages.dev/"><img src="docs/assets/readme/btn-cv.svg" alt="CV" width="30%"></a> <a href="https://www.linkedin.com/in/pszczelowski/"><img src="docs/assets/readme/btn-linkedin.svg" alt="LinkedIn" width="30%"></a> <a href="https://github.com/Pszczelowski"><img src="docs/assets/readme/btn-github.svg" alt="GitHub" width="30%"></a></p>
+<p align="center"><a href="https://pszczelowski.com/"><img src="docs/assets/readme/btn-cv.svg" alt="CV" width="30%"></a> <a href="https://www.linkedin.com/in/pszczelowski/"><img src="docs/assets/readme/btn-linkedin.svg" alt="LinkedIn" width="30%"></a> <a href="https://github.com/Pszczelowski"><img src="docs/assets/readme/btn-github.svg" alt="GitHub" width="30%"></a></p>
 
 <p align="center"><img src="docs/assets/readme/fictional-data.svg" alt="All data in this repository is fictional. No real names, jobs or personal details. MIT License." width="100%"></p>
