@@ -1,5 +1,5 @@
 <!--
-Version: 0.105.2
+Version: 0.105.3
 Date: 2026-11-16
 Status: verified: tests measured at v0.99.0 on 15 Nov 2026 (3,807 passed, 21 skipped); releases measured with gh on 15 Nov 2026; the agent count was read in .claude/agents/ on 14 Nov 2026. Graphics: docs/assets/readme/*.svg (v0.104.0). Screenshot: demo database of fictional jobs, 15 Nov 2026.
 -->
@@ -42,4 +42,4 @@ When my own job hunt grew to almost 1,000 alerts a month, I did what I do at wor
 
 <p align="center"><a href="https://pszczelowski.pages.dev/"><img src="docs/assets/readme/btn-cv.svg" alt="CV" width="30%"></a> <a href="https://www.linkedin.com/in/pszczelowski/"><img src="docs/assets/readme/btn-linkedin.svg" alt="LinkedIn" width="30%"></a> <a href="https://github.com/Pszczelowski"><img src="docs/assets/readme/btn-github.svg" alt="GitHub" width="30%"></a></p>
 
-<p align="center"><img src="docs/assets/readme/footer.svg" alt="Jakub Pszczelowski. Public copy: fictional persona, no personal data. MIT License." width="100%"></p>
+<p align="center"><img src="docs/assets/readme/footer.svg" alt="All data in this repository is fictional. No real names, jobs or personal details. MIT License." width="100%"></p>
