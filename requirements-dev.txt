@@ -1,5 +1,5 @@
 -r requirements.txt
 pytest>=9.2.0
-pypdf==6.21.4
+pypdf==7.1.1
 httpx2>=2.16
 pytest-xdist==3.8.0
